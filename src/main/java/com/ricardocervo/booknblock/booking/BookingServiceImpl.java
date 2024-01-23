@@ -6,9 +6,12 @@ import org.springframework.stereotype.Service;
 @Service
 @RequiredArgsConstructor
 public class BookingServiceImpl implements BookingService{
+
+    private final BookingRepository bookingRepository;
+
     @Override
     public Booking createBooking(Booking booking) {
-        return null;
+        return bookingRepository.save(booking);
     }
 
     @Override
