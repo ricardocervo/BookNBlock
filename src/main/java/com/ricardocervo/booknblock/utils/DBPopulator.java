@@ -1,11 +1,11 @@
 package com.ricardocervo.booknblock.utils;
 
 import com.ricardocervo.booknblock.property.Property;
-import com.ricardocervo.booknblock.property.PropertyRepository;
+import com.ricardocervo.booknblock.property.PropertyService;
 import com.ricardocervo.booknblock.role.Role;
 import com.ricardocervo.booknblock.role.RoleRepository;
 import com.ricardocervo.booknblock.user.User;
-import com.ricardocervo.booknblock.user.UserRepository;
+import com.ricardocervo.booknblock.user.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
@@ -20,8 +20,8 @@ import java.util.Optional;
 public class DBPopulator implements CommandLineRunner {
 
     private final RoleRepository roleRepository;
-    private final UserRepository userRepository;
-    private final PropertyRepository propertyRepository;
+    private final UserService userService;
+    private final PropertyService propertyService;
 
 
     @Override
@@ -45,7 +45,7 @@ public class DBPopulator implements CommandLineRunner {
         manager1.setEmail("ricardo.a.cervo@gmail.com");
         manager1.setRoles(new HashSet<>());
         manager1.getRoles().add(roleAdmin);
-        userRepository.save(manager1);
+        userService.createUser(manager1);
 
 
 
@@ -57,7 +57,7 @@ public class DBPopulator implements CommandLineRunner {
         user1.setEmail("alexa.richmond@example.com");
         user1.setRoles(new HashSet<>());
         user1.getRoles().add(roleUser);
-        userRepository.save(user1);
+        userService.createUser(user1);
 
         User user2 = new User();
         user2.setName("Marcus Wellford");
@@ -65,7 +65,7 @@ public class DBPopulator implements CommandLineRunner {
         user2.setEmail("marcus.wellford@example.com");
         user2.setRoles(new HashSet<>());
         user2.getRoles().add(roleUser);
-        userRepository.save(user2);
+        userService.createUser(user2);
 
         User user3 = new User();
         user3.setName("Sophia Castellano");
@@ -73,21 +73,21 @@ public class DBPopulator implements CommandLineRunner {
         user3.setEmail("sophia.castellano@example.com");
         user3.setRoles(new HashSet<>());
         user3.getRoles().add(roleUser);
-        userRepository.save(user3);
+        userService.createUser(user3);
 
         Property property = new Property();
         property.setName("A property");
         property.setOwner(user1);
         property.setDescription("A property - description");
         property.setLocation("Porto Alegre");
-        propertyRepository.save(property);
+        propertyService.createProperty(property);
 
         property = new Property();
         property.setOwner(user2);
         property.setName("Another property");
         property.setDescription("Another property - description");
         property.setLocation("New York");
-        propertyRepository.save(property);
+        propertyService.createProperty(property);
 
     }
 }
