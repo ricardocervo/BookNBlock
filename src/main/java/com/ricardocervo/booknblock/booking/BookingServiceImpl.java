@@ -34,6 +34,7 @@ public class BookingServiceImpl implements BookingService{
 
     public BookingResponseDto createBooking(BookingRequestDto bookingRequest)  {
 
+        validateBookingRequest(bookingRequest);
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userEmail = authentication.getName();
 
@@ -51,7 +52,19 @@ public class BookingServiceImpl implements BookingService{
         newBooking.setGuests(buildGuestList(bookingRequest, owner, newBooking));
         newBooking = bookingRepository.save(newBooking);
 
+
         return buildResponseDto(newBooking);
+    }
+
+    private void validateBookingRequest(BookingRequestDto bookingRequest) {
+        if (!bookingRequest.getIncludeLoggedUserAsGuest() && (bookingRequest.getGuests() == null || bookingRequest.getGuests().isEmpty())) {
+            throw new BadRequestException("If logged user is not a guest, you must provide at least one guest.");
+        }
+
+        if (bookingRequest.getStartDate().isAfter(bookingRequest.getEndDate())) {
+            throw new BadRequestException("End date must be greater or equal to start date");
+        }
+
     }
 
     private BookingResponseDto buildResponseDto(Booking newBooking) {
