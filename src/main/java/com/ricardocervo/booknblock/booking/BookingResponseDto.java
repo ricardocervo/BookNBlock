@@ -28,5 +28,7 @@ public class BookingResponseDto {
     @NotNull
     private LocalDate endDate;
 
+    private BookingStatus status;
+
     private List<GuestDto> guests;
 }

@@ -77,6 +77,7 @@ public class BookingServiceImpl implements BookingService {
         response.setPropertyId(newBooking.getProperty().getId().toString());
         response.setEndDate(newBooking.getEndDate());
         response.setStartDate(newBooking.getStartDate());
+        response.setStatus(newBooking.getStatus());
         return response;
     }
 
@@ -115,11 +116,11 @@ public class BookingServiceImpl implements BookingService {
                 booking.getProperty(), BookingStatus.CANCELED);
 
         return existingBookings.stream().anyMatch(existingBooking ->
-                !booking.equals(existingBooking) &&
-                        booking.getStartDate().isBefore(existingBooking.getEndDate()) &&
-                        existingBooking.getStartDate().isBefore(booking.getEndDate())
-
+                !existingBooking.equals(booking) &&
+                        !booking.getStartDate().isAfter(existingBooking.getEndDate()) &&
+                        !existingBooking.getStartDate().isBefore(booking.getEndDate())
         );
+
     }
 
     private boolean isOverlappingWithBlock(Booking booking) {
@@ -186,6 +187,26 @@ public class BookingServiceImpl implements BookingService {
         }
 
         Booking updatedBooking = bookingRepository.save(booking);
+        return buildResponseDto(updatedBooking);
+    }
+
+    @Override
+    @Transactional
+    public BookingResponseDto rebookCancelledBooking(UUID bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+
+        if (booking.getStatus() != BookingStatus.CANCELED) {
+            throw new BadRequestException("Only cancelled bookings can be rebooked.");
+        }
+
+        if (isOverlappingWithExistingBooking(booking) || isOverlappingWithBlock(booking)) {
+            throw new ConflictException("Rebooking dates are overlapping with an existing booking or block.");
+        }
+
+        booking.setStatus(BookingStatus.CONFIRMED);
+        Booking updatedBooking = bookingRepository.save(booking);
+
         return buildResponseDto(updatedBooking);
     }
 

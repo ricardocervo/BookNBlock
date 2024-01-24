@@ -15,5 +15,7 @@ public interface BookingService {
     BookingResponseDto updateBookingDates(UUID bookingId, BookingDateUpdateDto dateUpdateDto);
 
     BookingResponseDto updateBookingGuests(UUID bookingId, BookingGuestUpdateDto guestUpdateDto);
+
+    BookingResponseDto rebookCancelledBooking(UUID bookingId);
 }
 
