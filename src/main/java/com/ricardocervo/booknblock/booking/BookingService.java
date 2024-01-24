@@ -20,5 +20,7 @@ public interface BookingService {
 
 
     void deleteBooking(UUID bookingId);
+
+    BookingResponseDto getBookingById(UUID bookingId);
 }
 

@@ -6,18 +6,17 @@ import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.validator.constraints.UUID;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.UUID;
 
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
 public class BookingRequestDto {
 
-    @UUID
-    private String propertyId;
+    private UUID propertyId;
 
     @NotNull
     private LocalDate startDate;

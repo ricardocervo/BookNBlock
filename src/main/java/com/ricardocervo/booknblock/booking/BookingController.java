@@ -56,6 +56,12 @@ public class BookingController {
         return ResponseEntity.noContent().build();
     }
 
+    @GetMapping("/{bookingId}")
+    public ResponseEntity<BookingResponseDto> getBooking(@PathVariable UUID bookingId) {
+        BookingResponseDto bookingDto = bookingService.getBookingById(bookingId);
+        return ResponseEntity.ok(bookingDto);
+    }
+
 
 }
 

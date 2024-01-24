@@ -2,17 +2,17 @@ package com.ricardocervo.booknblock.booking;
 
 import com.ricardocervo.booknblock.block.Block;
 import com.ricardocervo.booknblock.block.BlockRepository;
+import com.ricardocervo.booknblock.block.BlockService;
 import com.ricardocervo.booknblock.exceptions.BadRequestException;
 import com.ricardocervo.booknblock.exceptions.ConflictException;
 import com.ricardocervo.booknblock.exceptions.ResourceNotFoundException;
 import com.ricardocervo.booknblock.guest.Guest;
 import com.ricardocervo.booknblock.guest.GuestDto;
 import com.ricardocervo.booknblock.guest.GuestRepository;
-import com.ricardocervo.booknblock.property.PropertyRepository;
+import com.ricardocervo.booknblock.property.PropertyService;
 import com.ricardocervo.booknblock.security.SecurityService;
 import com.ricardocervo.booknblock.user.User;
 import com.ricardocervo.booknblock.user.UserDto;
-import com.ricardocervo.booknblock.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -29,9 +29,8 @@ import java.util.stream.Collectors;
 public class BookingServiceImpl implements BookingService {
 
     private final BookingRepository bookingRepository;
-    private final BlockRepository blockRepository;
-    private final UserRepository userRepository;
-    private final PropertyRepository propertyRepository;
+    private final BlockService blockService;
+    private final PropertyService propertyService;
     private final ModelMapper modelMapper;
     private final SecurityService securityService;
     private final GuestRepository guestRepository;
@@ -46,7 +45,7 @@ public class BookingServiceImpl implements BookingService {
 
         Booking newBooking = new Booking();
         newBooking.setOwner(owner);
-        newBooking.setProperty(propertyRepository.findById(UUID.fromString(bookingRequest.getPropertyId())).orElseThrow(() -> new ResourceNotFoundException("Property not found")));
+        newBooking.setProperty(propertyService.getPropertyOrThrowException(bookingRequest.getPropertyId()));
         newBooking.setStartDate(bookingRequest.getStartDate());
         newBooking.setEndDate(bookingRequest.getEndDate());
         newBooking.setStatus(BookingStatus.CONFIRMED);
@@ -126,7 +125,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     private boolean isOverlappingWithBlock(Booking booking) {
-        List<Block> blocks = blockRepository.findByProperty(booking.getProperty());
+        List<Block> blocks = blockService.findByProperty(booking.getProperty());
 
         return blocks.stream().anyMatch(block ->
                 booking.getStartDate().isBefore(block.getEndDate()) &&
@@ -224,5 +223,15 @@ public class BookingServiceImpl implements BookingService {
     private Booking getBookingOrThrowException(UUID bookingId) {
         return bookingRepository.findById(bookingId).orElseThrow(() -> new ResourceNotFoundException("Booking not found with id " + bookingId));
     }
+
+
+    @Override
+    public BookingResponseDto getBookingById(UUID bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found with id: " + bookingId));
+
+        return buildResponseDto(booking);
+    }
+
 
 }
