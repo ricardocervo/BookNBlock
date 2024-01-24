@@ -30,6 +30,7 @@ public class Guest {
     @Email
     private String email;
 
+    @NotNull
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "booking_id")
     private Booking booking;

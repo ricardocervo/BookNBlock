@@ -17,6 +17,9 @@ import java.util.List;
 public class BookingResponseDto {
 
     @UUID
+    private String id;
+
+    @UUID
     private String propertyId;
 
     @NotNull

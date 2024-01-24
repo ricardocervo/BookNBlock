@@ -8,15 +8,14 @@ import com.ricardocervo.booknblock.exceptions.ResourceNotFoundException;
 import com.ricardocervo.booknblock.guest.Guest;
 import com.ricardocervo.booknblock.guest.GuestDto;
 import com.ricardocervo.booknblock.property.PropertyRepository;
+import com.ricardocervo.booknblock.security.SecurityService;
 import com.ricardocervo.booknblock.user.User;
 import com.ricardocervo.booknblock.user.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.hibernate.annotations.NotFound;
 import org.modelmapper.ModelMapper;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -24,21 +23,20 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
-public class BookingServiceImpl implements BookingService{
+public class BookingServiceImpl implements BookingService {
 
     private final BookingRepository bookingRepository;
     private final BlockRepository blockRepository;
     private final UserRepository userRepository;
     private final PropertyRepository propertyRepository;
     private final ModelMapper modelMapper;
+    private final SecurityService securityService;
 
-    public BookingResponseDto createBooking(BookingRequestDto bookingRequest)  {
+    public BookingResponseDto createBooking(BookingRequestDto bookingRequest) {
 
         validateBookingRequest(bookingRequest);
-        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-        String userEmail = authentication.getName();
 
-        User owner = userRepository.findByEmail(userEmail).orElseThrow(() -> new ResourceNotFoundException("User not found"));
+        User owner = securityService.getLoggedUser();
 
         Booking newBooking = new Booking();
         newBooking.setOwner(owner);
@@ -69,13 +67,13 @@ public class BookingServiceImpl implements BookingService{
 
     private BookingResponseDto buildResponseDto(Booking newBooking) {
         BookingResponseDto response = new BookingResponseDto();
+        response.setId(newBooking.getId().toString());
         response.setGuests(newBooking.getGuests().stream().map(guest -> modelMapper.map(guest, GuestDto.class)).collect(Collectors.toList()));
         response.setPropertyId(newBooking.getProperty().getId().toString());
         response.setEndDate(newBooking.getEndDate());
         response.setStartDate(newBooking.getStartDate());
         return response;
     }
-
 
 
     private List<Guest> buildGuestList(BookingRequestDto bookingRequest, User owner, Booking booking) {
@@ -87,6 +85,7 @@ public class BookingServiceImpl implements BookingService{
         if (bookingRequest.getGuests() != null) {
             for (GuestDto guestDto : bookingRequest.getGuests()) {
                 Guest guest = modelMapper.map(guestDto, Guest.class);
+                guest.setBooking(booking);
                 guests.add(guest);
             }
         }
@@ -94,7 +93,7 @@ public class BookingServiceImpl implements BookingService{
         return guests;
     }
 
-    private Booking validateAndSaveBooking(Booking booking)  {
+    private Booking validateAndSaveBooking(Booking booking) {
         if (isOverlappingWithExistingBooking(booking)) {
             throw new ConflictException("Booking dates are overlapping with an existing booking.");
         }
@@ -111,8 +110,10 @@ public class BookingServiceImpl implements BookingService{
                 booking.getProperty(), BookingStatus.CANCELED);
 
         return existingBookings.stream().anyMatch(existingBooking ->
-                booking.getStartDate().isBefore(existingBooking.getEndDate()) &&
+                !booking.equals(existingBooking) &&
+                        booking.getStartDate().isBefore(existingBooking.getEndDate()) &&
                         existingBooking.getStartDate().isBefore(booking.getEndDate())
+
         );
     }
 
@@ -124,5 +125,43 @@ public class BookingServiceImpl implements BookingService{
                         block.getStartDate().isBefore(booking.getEndDate())
         );
     }
+
+    @Override
+    public BookingResponseDto cancelBooking(UUID bookingId) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+
+        if (booking.getStatus() == BookingStatus.CANCELED) {
+            throw new ConflictException("The booking is already canceled.");
+        }
+
+        booking.setStatus(BookingStatus.CANCELED);
+        Booking updatedBooking = bookingRepository.save(booking);
+
+        return buildResponseDto(updatedBooking);
+    }
+
+
+    @Override
+    public BookingResponseDto updateBookingDates(UUID bookingId, BookingDateUpdateDto dateUpdateDto) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+
+        validateBookingDates(dateUpdateDto.getStartDate(), dateUpdateDto.getEndDate());
+
+        booking.setStartDate(dateUpdateDto.getStartDate());
+        booking.setEndDate(dateUpdateDto.getEndDate());
+
+        validateAndSaveBooking(booking);
+
+        return buildResponseDto(booking);
+    }
+
+    private void validateBookingDates(LocalDate startDate, LocalDate endDate) {
+        if (startDate.isAfter(endDate)) {
+            throw new BadRequestException("End date must be greater than or equal to start date.");
+        }
+    }
+
 
 }

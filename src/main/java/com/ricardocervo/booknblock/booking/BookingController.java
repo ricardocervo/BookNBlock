@@ -4,10 +4,9 @@ package com.ricardocervo.booknblock.booking;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/v1/bookings")
@@ -23,5 +22,17 @@ public class BookingController {
 
     }
 
+    @PatchMapping("/{bookingId}/cancel")
+    public ResponseEntity<BookingResponseDto> cancelBooking(@PathVariable UUID bookingId) {
+        BookingResponseDto canceledBooking = bookingService.cancelBooking(bookingId);
+        return ResponseEntity.ok(canceledBooking);
+    }
+
+    @PatchMapping("/{bookingId}/dates")
+    public ResponseEntity<BookingResponseDto> updateBookingDates(@PathVariable UUID bookingId,
+                                                                 @RequestBody @Valid BookingDateUpdateDto dateUpdateDto) {
+        BookingResponseDto updatedBooking = bookingService.updateBookingDates(bookingId, dateUpdateDto);
+        return ResponseEntity.ok(updatedBooking);
+    }
 }
 
