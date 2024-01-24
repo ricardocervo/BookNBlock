@@ -6,9 +6,8 @@ import org.springframework.stereotype.Service;
 
 public interface BookingService {
 
-    public Booking createBooking(Booking booking);
+    public Booking createBooking(BookingRequestDto bookingRequest);
 
-    public Booking updateBooking(Long id, Booking booking);
 
 }
 
