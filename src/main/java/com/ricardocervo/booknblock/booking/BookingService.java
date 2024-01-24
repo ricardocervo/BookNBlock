@@ -10,9 +10,10 @@ public interface BookingService {
 
     public BookingResponseDto createBooking(BookingRequestDto bookingRequest);
 
-
     BookingResponseDto cancelBooking(UUID bookingId);
 
     BookingResponseDto updateBookingDates(UUID bookingId, BookingDateUpdateDto dateUpdateDto);
+
+    BookingResponseDto updateBookingGuests(UUID bookingId, BookingGuestUpdateDto guestUpdateDto);
 }
 

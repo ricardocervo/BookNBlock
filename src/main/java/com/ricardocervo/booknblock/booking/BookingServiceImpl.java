@@ -7,6 +7,7 @@ import com.ricardocervo.booknblock.exceptions.ConflictException;
 import com.ricardocervo.booknblock.exceptions.ResourceNotFoundException;
 import com.ricardocervo.booknblock.guest.Guest;
 import com.ricardocervo.booknblock.guest.GuestDto;
+import com.ricardocervo.booknblock.guest.GuestRepository;
 import com.ricardocervo.booknblock.property.PropertyRepository;
 import com.ricardocervo.booknblock.security.SecurityService;
 import com.ricardocervo.booknblock.user.User;
@@ -14,6 +15,7 @@ import com.ricardocervo.booknblock.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -31,7 +33,10 @@ public class BookingServiceImpl implements BookingService {
     private final PropertyRepository propertyRepository;
     private final ModelMapper modelMapper;
     private final SecurityService securityService;
+    private final GuestRepository guestRepository;
 
+    @Override
+    @Transactional
     public BookingResponseDto createBooking(BookingRequestDto bookingRequest) {
 
         validateBookingRequest(bookingRequest);
@@ -127,6 +132,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     @Override
+    @Transactional
     public BookingResponseDto cancelBooking(UUID bookingId) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
@@ -143,6 +149,7 @@ public class BookingServiceImpl implements BookingService {
 
 
     @Override
+    @Transactional
     public BookingResponseDto updateBookingDates(UUID bookingId, BookingDateUpdateDto dateUpdateDto) {
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
@@ -161,6 +168,25 @@ public class BookingServiceImpl implements BookingService {
         if (startDate.isAfter(endDate)) {
             throw new BadRequestException("End date must be greater than or equal to start date.");
         }
+    }
+
+    @Override
+    @Transactional
+    public BookingResponseDto updateBookingGuests(UUID bookingId, BookingGuestUpdateDto guestUpdateDto) {
+        Booking booking = bookingRepository.findById(bookingId)
+                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+
+        guestRepository.deleteAll(booking.getGuests());
+        booking.getGuests().clear();
+
+        for (GuestDto guestDto : guestUpdateDto.getGuests()) {
+            Guest guest = modelMapper.map(guestDto, Guest.class);
+            guest.setBooking(booking); // Set the booking reference
+            booking.getGuests().add(guest);
+        }
+
+        Booking updatedBooking = bookingRepository.save(booking);
+        return buildResponseDto(updatedBooking);
     }
 
 

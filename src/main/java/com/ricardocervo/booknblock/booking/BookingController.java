@@ -34,5 +34,12 @@ public class BookingController {
         BookingResponseDto updatedBooking = bookingService.updateBookingDates(bookingId, dateUpdateDto);
         return ResponseEntity.ok(updatedBooking);
     }
+
+    @PatchMapping("/{bookingId}/guests")
+    public ResponseEntity<BookingResponseDto> updateBookingGuests(@PathVariable UUID bookingId,
+                                                                  @RequestBody @Valid BookingGuestUpdateDto guestUpdateDto) {
+        BookingResponseDto updatedBooking = bookingService.updateBookingGuests(bookingId, guestUpdateDto);
+        return ResponseEntity.ok(updatedBooking);
+    }
 }
 
