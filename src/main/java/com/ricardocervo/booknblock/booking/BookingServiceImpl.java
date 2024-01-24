@@ -4,17 +4,23 @@ import com.ricardocervo.booknblock.block.Block;
 import com.ricardocervo.booknblock.block.BlockRepository;
 import com.ricardocervo.booknblock.exceptions.BadRequestException;
 import com.ricardocervo.booknblock.exceptions.ConflictException;
+import com.ricardocervo.booknblock.exceptions.ResourceNotFoundException;
+import com.ricardocervo.booknblock.guest.Guest;
+import com.ricardocervo.booknblock.guest.GuestDto;
 import com.ricardocervo.booknblock.property.PropertyRepository;
 import com.ricardocervo.booknblock.user.User;
 import com.ricardocervo.booknblock.user.UserRepository;
-import com.ricardocervo.booknblock.user.UserService;
 import lombok.RequiredArgsConstructor;
+import org.hibernate.annotations.NotFound;
+import org.modelmapper.ModelMapper;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -24,27 +30,58 @@ public class BookingServiceImpl implements BookingService{
     private final BlockRepository blockRepository;
     private final UserRepository userRepository;
     private final PropertyRepository propertyRepository;
+    private final ModelMapper modelMapper;
 
-    public Booking createBooking(BookingRequestDto bookingRequest)  {
-
-
+    public BookingResponseDto createBooking(BookingRequestDto bookingRequest)  {
 
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String userEmail = authentication.getName();
-        User guest = userRepository.findByEmail(userEmail).orElseThrow(() -> new BadRequestException("User not found"));
+
+        User owner = userRepository.findByEmail(userEmail).orElseThrow(() -> new ResourceNotFoundException("User not found"));
 
         Booking newBooking = new Booking();
-        newBooking.setGuest(guest);
-        newBooking.setProperty(propertyRepository.findById(UUID.fromString(bookingRequest.getPropertyId())).orElseThrow(() -> new BadRequestException("Property not found")));
+        newBooking.setOwner(owner);
+        newBooking.setProperty(propertyRepository.findById(UUID.fromString(bookingRequest.getPropertyId())).orElseThrow(() -> new ResourceNotFoundException("Property not found")));
         newBooking.setStartDate(bookingRequest.getStartDate());
         newBooking.setEndDate(bookingRequest.getEndDate());
         newBooking.setStatus(BookingStatus.CONFIRMED);
 
-        validateAndSaveBooking(newBooking);
-        return newBooking;
+        newBooking = validateAndSaveBooking(newBooking);
+
+        newBooking.setGuests(buildGuestList(bookingRequest, owner, newBooking));
+        newBooking = bookingRepository.save(newBooking);
+
+        return buildResponseDto(newBooking);
     }
 
-    private void validateAndSaveBooking(Booking booking)  {
+    private BookingResponseDto buildResponseDto(Booking newBooking) {
+        BookingResponseDto response = new BookingResponseDto();
+        response.setGuests(newBooking.getGuests().stream().map(guest -> modelMapper.map(guest, GuestDto.class)).collect(Collectors.toList()));
+        response.setPropertyId(newBooking.getProperty().getId().toString());
+        response.setEndDate(newBooking.getEndDate());
+        response.setStartDate(newBooking.getStartDate());
+        return response;
+    }
+
+
+
+    private List<Guest> buildGuestList(BookingRequestDto bookingRequest, User owner, Booking booking) {
+        List<Guest> guests = new ArrayList<>();
+        if (bookingRequest.getIncludeLoggedUserAsGuest()) {
+            guests.add(new Guest(UUID.randomUUID(), owner.getName(), owner.getEmail(), booking));
+        }
+
+        if (bookingRequest.getGuests() != null) {
+            for (GuestDto guestDto : bookingRequest.getGuests()) {
+                Guest guest = modelMapper.map(guestDto, Guest.class);
+                guests.add(guest);
+            }
+        }
+
+        return guests;
+    }
+
+    private Booking validateAndSaveBooking(Booking booking)  {
         if (isOverlappingWithExistingBooking(booking)) {
             throw new ConflictException("Booking dates are overlapping with an existing booking.");
         }
@@ -53,7 +90,7 @@ public class BookingServiceImpl implements BookingService{
             throw new ConflictException("Booking dates are overlapping with a block.");
         }
 
-        bookingRepository.save(booking);
+        return bookingRepository.save(booking);
     }
 
     private boolean isOverlappingWithExistingBooking(Booking booking) {

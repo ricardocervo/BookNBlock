@@ -1,12 +1,16 @@
 package com.ricardocervo.booknblock.booking;
+import com.ricardocervo.booknblock.guest.Guest;
 import com.ricardocervo.booknblock.property.Property;
 import com.ricardocervo.booknblock.user.User;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import lombok.ToString;
 
 import java.time.LocalDate;
+import java.util.List;
 import java.util.UUID;
 
 
@@ -24,14 +28,22 @@ public class Booking {
     private Property property;
 
     @ManyToOne
-    @JoinColumn(name = "guest_id")
-    private User guest;
+    @JoinColumn(name = "owner_id")
+    private User owner;
 
+    @NotNull
     private LocalDate startDate;
+
+    @NotNull
     private LocalDate endDate;
 
     @Enumerated(EnumType.STRING)
     private BookingStatus status;
+
+    @ToString.Exclude
+    @OneToMany(mappedBy = "booking", cascade = CascadeType.ALL)
+    private List<Guest> guests;
+
 
 }
 

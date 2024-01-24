@@ -14,7 +14,7 @@ import java.util.List;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-public class BookingRequestDto {
+public class BookingResponseDto {
 
     @UUID
     private String propertyId;
@@ -24,9 +24,6 @@ public class BookingRequestDto {
 
     @NotNull
     private LocalDate endDate;
-
-    @NotNull
-    private Boolean includeLoggedUserAsGuest;
 
     private List<GuestDto> guests;
 }
