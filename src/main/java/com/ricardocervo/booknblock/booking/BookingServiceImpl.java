@@ -5,12 +5,14 @@ import com.ricardocervo.booknblock.block.BlockRepository;
 import com.ricardocervo.booknblock.exceptions.BadRequestException;
 import com.ricardocervo.booknblock.exceptions.ConflictException;
 import com.ricardocervo.booknblock.exceptions.ResourceNotFoundException;
+import com.ricardocervo.booknblock.exceptions.UnauthorizedException;
 import com.ricardocervo.booknblock.guest.Guest;
 import com.ricardocervo.booknblock.guest.GuestDto;
 import com.ricardocervo.booknblock.guest.GuestRepository;
 import com.ricardocervo.booknblock.property.PropertyRepository;
 import com.ricardocervo.booknblock.security.SecurityService;
 import com.ricardocervo.booknblock.user.User;
+import com.ricardocervo.booknblock.user.UserDto;
 import com.ricardocervo.booknblock.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
@@ -78,6 +80,7 @@ public class BookingServiceImpl implements BookingService {
         response.setEndDate(newBooking.getEndDate());
         response.setStartDate(newBooking.getStartDate());
         response.setStatus(newBooking.getStatus());
+        response.setOwner(UserDto.builder().email(newBooking.getOwner().getEmail()).name(newBooking.getOwner().getName()).build());
         return response;
     }
 
@@ -135,6 +138,8 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public BookingResponseDto cancelBooking(UUID bookingId) {
+        securityService.authorize(bookingId);
+
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
 
@@ -152,6 +157,8 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public BookingResponseDto updateBookingDates(UUID bookingId, BookingDateUpdateDto dateUpdateDto) {
+        securityService.authorize(bookingId);
+
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
 
@@ -174,6 +181,8 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public BookingResponseDto updateBookingGuests(UUID bookingId, BookingGuestUpdateDto guestUpdateDto) {
+        securityService.authorize(bookingId);
+
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
 
@@ -182,7 +191,7 @@ public class BookingServiceImpl implements BookingService {
 
         for (GuestDto guestDto : guestUpdateDto.getGuests()) {
             Guest guest = modelMapper.map(guestDto, Guest.class);
-            guest.setBooking(booking); // Set the booking reference
+            guest.setBooking(booking);
             booking.getGuests().add(guest);
         }
 
@@ -193,6 +202,7 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public BookingResponseDto rebookCancelledBooking(UUID bookingId) {
+        securityService.authorize(bookingId);
         Booking booking = bookingRepository.findById(bookingId)
                 .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
 
@@ -209,6 +219,5 @@ public class BookingServiceImpl implements BookingService {
 
         return buildResponseDto(updatedBooking);
     }
-
 
 }
