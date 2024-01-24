@@ -14,7 +14,6 @@ import java.util.UUID;
 @Data
 @AllArgsConstructor
 @NoArgsConstructor
-@Entity
 public class GuestDto {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)

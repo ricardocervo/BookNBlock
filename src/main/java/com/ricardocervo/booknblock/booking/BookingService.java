@@ -19,5 +19,6 @@ public interface BookingService {
     BookingResponseDto rebookCancelledBooking(UUID bookingId);
 
 
+    void deleteBooking(UUID bookingId);
 }
 

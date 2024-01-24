@@ -5,7 +5,6 @@ import com.ricardocervo.booknblock.block.BlockRepository;
 import com.ricardocervo.booknblock.exceptions.BadRequestException;
 import com.ricardocervo.booknblock.exceptions.ConflictException;
 import com.ricardocervo.booknblock.exceptions.ResourceNotFoundException;
-import com.ricardocervo.booknblock.exceptions.UnauthorizedException;
 import com.ricardocervo.booknblock.guest.Guest;
 import com.ricardocervo.booknblock.guest.GuestDto;
 import com.ricardocervo.booknblock.guest.GuestRepository;
@@ -140,8 +139,7 @@ public class BookingServiceImpl implements BookingService {
     public BookingResponseDto cancelBooking(UUID bookingId) {
         securityService.authorize(bookingId);
 
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+        Booking booking = getBookingOrThrowException(bookingId);
 
         if (booking.getStatus() == BookingStatus.CANCELED) {
             throw new ConflictException("The booking is already canceled.");
@@ -159,8 +157,7 @@ public class BookingServiceImpl implements BookingService {
     public BookingResponseDto updateBookingDates(UUID bookingId, BookingDateUpdateDto dateUpdateDto) {
         securityService.authorize(bookingId);
 
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+        Booking booking = getBookingOrThrowException(bookingId);
 
         validateBookingDates(dateUpdateDto.getStartDate(), dateUpdateDto.getEndDate());
 
@@ -183,8 +180,7 @@ public class BookingServiceImpl implements BookingService {
     public BookingResponseDto updateBookingGuests(UUID bookingId, BookingGuestUpdateDto guestUpdateDto) {
         securityService.authorize(bookingId);
 
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+        Booking booking = getBookingOrThrowException(bookingId);
 
         guestRepository.deleteAll(booking.getGuests());
         booking.getGuests().clear();
@@ -203,8 +199,7 @@ public class BookingServiceImpl implements BookingService {
     @Transactional
     public BookingResponseDto rebookCancelledBooking(UUID bookingId) {
         securityService.authorize(bookingId);
-        Booking booking = bookingRepository.findById(bookingId)
-                .orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
+        Booking booking = getBookingOrThrowException(bookingId);
 
         if (booking.getStatus() != BookingStatus.CANCELED) {
             throw new BadRequestException("Only cancelled bookings can be rebooked.");
@@ -218,6 +213,16 @@ public class BookingServiceImpl implements BookingService {
         Booking updatedBooking = bookingRepository.save(booking);
 
         return buildResponseDto(updatedBooking);
+    }
+
+    public void deleteBooking(UUID bookingId) {
+        securityService.authorize(bookingId);
+        bookingRepository.delete(getBookingOrThrowException(bookingId));
+    }
+
+
+    private Booking getBookingOrThrowException(UUID bookingId) {
+        return bookingRepository.findById(bookingId).orElseThrow(() -> new ResourceNotFoundException("Booking not found with id " + bookingId));
     }
 
 }

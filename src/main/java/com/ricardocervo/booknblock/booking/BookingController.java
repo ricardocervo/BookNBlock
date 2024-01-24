@@ -16,6 +16,7 @@ public class BookingController {
 
     private final BookingService bookingService;
 
+
     @PostMapping
     public ResponseEntity<BookingResponseDto> createBooking(@RequestBody @Valid BookingRequestDto bookingRequest) {
         BookingResponseDto newBooking = bookingService.createBooking(bookingRequest);
@@ -48,6 +49,13 @@ public class BookingController {
         BookingResponseDto rebookedBooking = bookingService.rebookCancelledBooking(bookingId);
         return ResponseEntity.ok(rebookedBooking);
     }
+
+    @DeleteMapping("/{bookingId}")
+    public ResponseEntity<?> deleteBooking(@PathVariable UUID bookingId) {
+        bookingService.deleteBooking(bookingId);
+        return ResponseEntity.noContent().build();
+    }
+
 
 }
 
