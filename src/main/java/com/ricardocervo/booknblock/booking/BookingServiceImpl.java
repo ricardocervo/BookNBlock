@@ -1,7 +1,6 @@
 package com.ricardocervo.booknblock.booking;
 
 import com.ricardocervo.booknblock.block.Block;
-import com.ricardocervo.booknblock.block.BlockRepository;
 import com.ricardocervo.booknblock.block.BlockService;
 import com.ricardocervo.booknblock.exceptions.BadRequestException;
 import com.ricardocervo.booknblock.exceptions.ConflictException;
@@ -146,7 +145,7 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public BookingResponseDto cancelBooking(UUID bookingId) {
-        securityService.authorize(bookingId);
+        securityService.authorizeBookingUpdate(bookingId);
 
         Booking booking = getBookingOrThrowException(bookingId);
 
@@ -164,7 +163,7 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public BookingResponseDto updateBookingDates(UUID bookingId, BookingDateUpdateDto dateUpdateDto) {
-        securityService.authorize(bookingId);
+        securityService.authorizeBookingUpdate(bookingId);
 
         Booking booking = getBookingOrThrowException(bookingId);
 
@@ -187,7 +186,7 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public BookingResponseDto updateBookingGuests(UUID bookingId, BookingGuestUpdateDto guestUpdateDto) {
-        securityService.authorize(bookingId);
+        securityService.authorizeBookingUpdate(bookingId);
 
         Booking booking = getBookingOrThrowException(bookingId);
 
@@ -207,7 +206,7 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public BookingResponseDto rebookCancelledBooking(UUID bookingId) {
-        securityService.authorize(bookingId);
+        securityService.authorizeBookingUpdate(bookingId);
         Booking booking = getBookingOrThrowException(bookingId);
 
         if (booking.getStatus() != BookingStatus.CANCELED) {
@@ -225,7 +224,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     public void deleteBooking(UUID bookingId) {
-        securityService.authorize(bookingId);
+        securityService.authorizeBookingUpdate(bookingId);
         bookingRepository.delete(getBookingOrThrowException(bookingId));
     }
 
