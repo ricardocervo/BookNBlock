@@ -16,4 +16,6 @@ public interface BlockService {
     List<Block> findByProperty(Property property);
 
     BlockResponseDto updateBlock(UUID blockId, BlockUpdateDto blockUpdateDto);
+
+    void deleteBlock(UUID blockId);
 }

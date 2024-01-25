@@ -55,6 +55,12 @@ public class BlockServiceImpl implements BlockService{
         return convertToBlockResponseDto(block);
     }
 
+    @Override
+    public void deleteBlock(UUID blockId) {
+        Block block = getBlockOrThrowException(blockId);
+        blockRepository.delete(block);
+    }
+
     private void validateBlockRequest(BlockRequestDto blockRequest) {
         if (blockRequest.getStartDate() == null || blockRequest.getEndDate() == null) {
             throw new IllegalArgumentException("Start date and end date cannot be null.");

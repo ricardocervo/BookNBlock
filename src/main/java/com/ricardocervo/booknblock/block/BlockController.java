@@ -26,4 +26,10 @@ public class BlockController {
         return ResponseEntity.ok(updatedBlock);
     }
 
+    @DeleteMapping("/{blockId}")
+    public ResponseEntity<?> deleteBlock(@PathVariable UUID blockId) {
+        blockService.deleteBlock(blockId);
+        return ResponseEntity.noContent().build();
+    }
+
 }
