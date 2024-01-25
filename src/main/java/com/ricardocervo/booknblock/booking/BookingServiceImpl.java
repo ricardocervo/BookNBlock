@@ -137,10 +137,11 @@ public class BookingServiceImpl implements BookingService {
         List<Block> blocks = blockService.findByProperty(booking.getProperty());
 
         return blocks.stream().anyMatch(block ->
-                booking.getStartDate().isBefore(block.getEndDate()) &&
-                        block.getStartDate().isBefore(booking.getEndDate())
+                !booking.getStartDate().isAfter(block.getEndDate()) &&
+                        !block.getStartDate().isBefore(booking.getEndDate())
         );
     }
+
 
     @Override
     @Transactional

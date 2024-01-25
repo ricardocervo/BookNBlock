@@ -1,5 +1,8 @@
 package com.ricardocervo.booknblock.block;
 
+import com.ricardocervo.booknblock.booking.Booking;
+import com.ricardocervo.booknblock.booking.BookingRepository;
+import com.ricardocervo.booknblock.booking.BookingStatus;
 import com.ricardocervo.booknblock.exceptions.ConflictException;
 import com.ricardocervo.booknblock.exceptions.ResourceNotFoundException;
 import com.ricardocervo.booknblock.property.Property;
@@ -15,7 +18,7 @@ import java.util.List;
 public class BlockServiceImpl implements BlockService{
     private final BlockRepository blockRepository;
     private final PropertyRepository propertyRepository;
-
+    private final BookingRepository bookingRepository;
     @Override
     @Transactional
     public BlockResponseDto createBlock(BlockRequestDto blockRequest) {
@@ -51,19 +54,26 @@ public class BlockServiceImpl implements BlockService{
 
 
     private void validateBlockDates(Block block, Property property) {
-        // Example logic for overlapping blocks
         List<Block> existingBlocks = blockRepository.findByProperty(property);
         for (Block existingBlock : existingBlocks) {
-            if (existingBlock.getId().equals(block.getId())) {
-                continue; // Skip the current block being saved
-            }
-            if (block.getStartDate().isBefore(existingBlock.getEndDate()) && block.getEndDate().isAfter(existingBlock.getStartDate())) {
+            if (!existingBlock.getId().equals(block.getId()) &&
+                    !block.getStartDate().isAfter(existingBlock.getEndDate()) &&
+                    !block.getEndDate().isBefore(existingBlock.getStartDate())) {
                 throw new ConflictException("The block dates are overlapping with an existing block.");
             }
         }
 
-        // Add logic to check for overlapping bookings if needed
+        List<Booking> existingBookings = bookingRepository.findByProperty(property);
+        for (Booking existingBooking : existingBookings) {
+            if (existingBooking.getStatus() != BookingStatus.CANCELED &&
+                    !block.getStartDate().isAfter(existingBooking.getEndDate()) &&
+                    !block.getEndDate().isBefore(existingBooking.getStartDate())) {
+                throw new ConflictException("The block dates are overlapping with an existing booking.");
+            }
+        }
     }
+
+
 
 
     private BlockResponseDto convertToBlockResponseDto(Block block) {
