@@ -1,45 +1,38 @@
-package com.ricardocervo.booknblock.property;
+package com.ricardocervo.booknblock.guest;
 
-
+import com.ricardocervo.booknblock.booking.Booking;
 import com.ricardocervo.booknblock.user.User;
 import jakarta.persistence.*;
+import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.hibernate.annotations.Fetch;
 
 import java.util.UUID;
 
 @Data
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-public class Property {
-
-    @EqualsAndHashCode.Include
+public class Guest {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
-
-    @NotNull
-    @ManyToOne
-    @JoinColumn(name = "owner_id")
-    private User owner;
 
     @NotNull
     @Size(min = 3, max = 255)
     private String name;
 
     @NotNull
-    @Size(min = 3, max = 255)
-    private String location;
+    @Email
+    private String email;
 
     @NotNull
-    @Size(min = 3, max = 1000)
-    private String description;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "booking_id")
+    private Booking booking;
 
 }
-
