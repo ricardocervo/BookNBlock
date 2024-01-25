@@ -6,27 +6,26 @@ import com.ricardocervo.booknblock.booking.BookingStatus;
 import com.ricardocervo.booknblock.exceptions.ConflictException;
 import com.ricardocervo.booknblock.exceptions.ResourceNotFoundException;
 import com.ricardocervo.booknblock.property.Property;
-import com.ricardocervo.booknblock.property.PropertyRepository;
+import com.ricardocervo.booknblock.property.PropertyService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
 public class BlockServiceImpl implements BlockService{
     private final BlockRepository blockRepository;
-    private final PropertyRepository propertyRepository;
+    private final PropertyService propertyService;
     private final BookingRepository bookingRepository;
     @Override
     @Transactional
     public BlockResponseDto createBlock(BlockRequestDto blockRequest) {
         validateBlockRequest(blockRequest);
 
-        Property property = propertyRepository.findById(blockRequest.getPropertyId())
-                .orElseThrow(() -> new ResourceNotFoundException("Property not found with id: " + blockRequest.getPropertyId()));
-
+        Property property = propertyService.getPropertyOrThrowException(blockRequest.getPropertyId());
         Block block = new Block();
         block.setProperty(property);
         block.setStartDate(blockRequest.getStartDate());
@@ -40,6 +39,22 @@ public class BlockServiceImpl implements BlockService{
         return convertToBlockResponseDto(block);
     }
 
+
+
+    @Override
+    public BlockResponseDto updateBlock(UUID blockId, BlockUpdateDto blockUpdateDto) {
+        Block block = getBlockOrThrowException(blockId);
+
+        block.setStartDate(blockUpdateDto.getStartDate());
+        block.setEndDate(blockUpdateDto.getEndDate());
+        block.setReason(blockUpdateDto.getReason());
+
+        validateBlockDates(block, block.getProperty());
+
+        block = blockRepository.save(block);
+        return convertToBlockResponseDto(block);
+    }
+
     private void validateBlockRequest(BlockRequestDto blockRequest) {
         if (blockRequest.getStartDate() == null || blockRequest.getEndDate() == null) {
             throw new IllegalArgumentException("Start date and end date cannot be null.");
@@ -49,7 +64,6 @@ public class BlockServiceImpl implements BlockService{
             throw new IllegalArgumentException("Start date must be before end date.");
         }
 
-        // Add more validation as needed (e.g., reason for the block, property ID)
     }
 
 
@@ -86,10 +100,10 @@ public class BlockServiceImpl implements BlockService{
         );
     }
 
-
     @Override
-    public Block updateBlock(Long id, Block block) {
-        return null;
+    public Block getBlockOrThrowException(UUID blockId) {
+        return blockRepository.findById(blockId)
+                .orElseThrow(() -> new ResourceNotFoundException("Block not found with id: " + blockId));
     }
 
     @Override
