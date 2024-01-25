@@ -7,6 +7,7 @@ import com.ricardocervo.booknblock.exceptions.ConflictException;
 import com.ricardocervo.booknblock.exceptions.ResourceNotFoundException;
 import com.ricardocervo.booknblock.property.Property;
 import com.ricardocervo.booknblock.property.PropertyService;
+import com.ricardocervo.booknblock.utils.DatesUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -16,10 +17,11 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class BlockServiceImpl implements BlockService{
+public class BlockServiceImpl implements BlockService {
     private final BlockRepository blockRepository;
     private final PropertyService propertyService;
     private final BookingRepository bookingRepository;
+
     @Override
     @Transactional
     public BlockResponseDto createBlock(BlockRequestDto blockRequest) {
@@ -38,7 +40,6 @@ public class BlockServiceImpl implements BlockService{
 
         return convertToBlockResponseDto(block);
     }
-
 
 
     @Override
@@ -76,24 +77,30 @@ public class BlockServiceImpl implements BlockService{
     private void validateBlockDates(Block block, Property property) {
         List<Block> existingBlocks = blockRepository.findByProperty(property);
         for (Block existingBlock : existingBlocks) {
-            if (!existingBlock.getId().equals(block.getId()) &&
-                    !block.getStartDate().isAfter(existingBlock.getEndDate()) &&
-                    !block.getEndDate().isBefore(existingBlock.getStartDate())) {
+
+            if (!existingBlock.equals(block) &&
+                    DatesUtils.isOverlappingDates(
+                            block.getStartDate(),
+                            block.getEndDate(),
+                            existingBlock.getStartDate(),
+                            existingBlock.getEndDate())) {
                 throw new ConflictException("The block dates are overlapping with an existing block.");
+
             }
         }
 
         List<Booking> existingBookings = bookingRepository.findByProperty(property);
         for (Booking existingBooking : existingBookings) {
             if (existingBooking.getStatus() != BookingStatus.CANCELED &&
-                    !block.getStartDate().isAfter(existingBooking.getEndDate()) &&
-                    !block.getEndDate().isBefore(existingBooking.getStartDate())) {
+                    DatesUtils.isOverlappingDates(
+                            existingBooking.getStartDate(),
+                            existingBooking.getEndDate(),
+                            block.getStartDate(),
+                            block.getEndDate())) {
                 throw new ConflictException("The block dates are overlapping with an existing booking.");
             }
         }
     }
-
-
 
 
     private BlockResponseDto convertToBlockResponseDto(Block block) {

@@ -18,6 +18,8 @@ import java.util.UUID;
 @NoArgsConstructor
 @Entity
 public class Block {
+
+    @EqualsAndHashCode.Include
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
