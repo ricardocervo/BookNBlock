@@ -9,6 +9,7 @@ import com.ricardocervo.booknblock.exceptions.ResourceNotFoundException;
 import com.ricardocervo.booknblock.guest.Guest;
 import com.ricardocervo.booknblock.guest.GuestDto;
 import com.ricardocervo.booknblock.guest.GuestRepository;
+import com.ricardocervo.booknblock.property.Property;
 import com.ricardocervo.booknblock.property.PropertyService;
 import com.ricardocervo.booknblock.security.SecurityService;
 import com.ricardocervo.booknblock.user.User;
@@ -38,26 +39,35 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public BookingResponseDto createBooking(BookingRequestDto bookingRequest) {
-
         validateBookingRequest(bookingRequest);
 
         User owner = securityService.getLoggedUser();
+        Property property = propertyService.getPropertyOrThrowException(bookingRequest.getPropertyId());
 
-        Booking newBooking = new Booking();
-        newBooking.setOwner(owner);
-        newBooking.setProperty(propertyService.getPropertyOrThrowException(bookingRequest.getPropertyId()));
-        newBooking.setStartDate(bookingRequest.getStartDate());
-        newBooking.setEndDate(bookingRequest.getEndDate());
-        newBooking.setStatus(BookingStatus.CONFIRMED);
-
+        Booking newBooking = prepareNewBooking(bookingRequest, owner, property);
         newBooking = validateAndSaveBooking(newBooking);
 
-        newBooking.setGuests(buildGuestList(bookingRequest, owner, newBooking));
+        addGuestsToBooking(bookingRequest, owner, newBooking);
         newBooking = bookingRepository.save(newBooking);
-
 
         return buildResponseDto(newBooking);
     }
+
+    private Booking prepareNewBooking(BookingRequestDto bookingRequest, User owner, Property property) {
+        Booking booking = new Booking();
+        booking.setOwner(owner);
+        booking.setProperty(property);
+        booking.setStartDate(bookingRequest.getStartDate());
+        booking.setEndDate(bookingRequest.getEndDate());
+        booking.setStatus(BookingStatus.CONFIRMED);
+        return booking;
+    }
+
+    private void addGuestsToBooking(BookingRequestDto bookingRequest, User owner, Booking booking) {
+        List<Guest> guests = buildGuestList(bookingRequest, owner, booking);
+        booking.setGuests(guests);
+    }
+
 
     private void validateBookingRequest(BookingRequestDto bookingRequest) {
         if (!bookingRequest.getIncludeLoggedUserAsGuest() && (bookingRequest.getGuests() == null || bookingRequest.getGuests().isEmpty())) {
