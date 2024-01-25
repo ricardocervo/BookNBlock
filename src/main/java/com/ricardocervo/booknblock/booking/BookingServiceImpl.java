@@ -13,6 +13,7 @@ import com.ricardocervo.booknblock.property.PropertyService;
 import com.ricardocervo.booknblock.security.SecurityService;
 import com.ricardocervo.booknblock.user.User;
 import com.ricardocervo.booknblock.user.UserDto;
+import com.ricardocervo.booknblock.utils.DatesUtils;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
@@ -126,11 +127,13 @@ public class BookingServiceImpl implements BookingService {
                 booking.getProperty(), BookingStatus.CANCELED);
 
         return existingBookings.stream().anyMatch(existingBooking ->
-                !existingBooking.equals(booking) &&
-                        !booking.getStartDate().isAfter(existingBooking.getEndDate()) &&
-                        !existingBooking.getStartDate().isBefore(booking.getEndDate())
-        );
 
+                !existingBooking.equals(booking)
+                        && DatesUtils.isOverlappingDates(
+                        booking.getStartDate(),
+                        booking.getEndDate(),
+                        existingBooking.getStartDate(),
+                        existingBooking.getEndDate()));
     }
 
     private boolean isOverlappingWithBlock(Booking booking) {
