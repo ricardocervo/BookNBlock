@@ -30,6 +30,95 @@ Below is the ER diagram:
 
 Ensure you have **Java 17** and **Apache Maven** installed on your system. Verify that port 8080 is available. From the project's root directory, run the application using the following Maven command:
 
+### Sending requests
+
+In this section, we will see some examples of how to interact with the API to create Bookings and Blocks. A complete documentation of the API can be found further ahead in this document.
+
+After starting the application, we can use applications like Postman to send requests and interact with the API. The first request to be made is for authentication:
+
+```
+POST http://localhost:8080/api/v1/auth/authenticate
+```
+The request body should contain the email and password of a user registered in the database:
+
+```
+{
+    "email": "marcus.wellford@example.com",
+    "password": "user123"
+}
+
+```
+
+If the user exists and the password is correct, the response will contain the authentication token:
+
+```
+{
+    "user": {
+        "name": "Marcus Wellford",
+        "email": "marcus.wellford@example.com"
+    },
+    "token": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJtYXJjdXMud2VsbGZvcmRAZXhhbXBsZS5jb20iLCJpYXQiOjE3MDYyOTU2NzYsImV4cCI6MTcwNjI5OTI3Nn0.sk1l-zPGh3nOOA0oCY8BBN-0rMI0dVXMnBZmlwSIjkE"
+}
+```
+Now we can use this token in the Authorization header of other endpoints, and thus call for example the endpoint to create a Booking:
+
+```
+POST http://localhost:8080/api/v1/bookings
+```
+
+```
+{
+    "propertyId":"601e0800-a069-4672-a1e4-0f5eec0f9e9c",
+    "startDate": "2024-02-10",
+    "endDate": "2024-02-13",
+    "includeLoggedUserAsGuest": true,
+    "guests": [
+        {
+            "name": "Guest1",
+            "email": "email1@guest1.com"
+        },
+        {
+            "name": "Guest2",
+            "email": "email2@email2.com"
+        }
+    ]
+}
+```
+
+If all input fields are valid and the Property exists in the database, the response should be something like:
+
+```
+{
+    "id": "fa50cd3e-10dd-4efd-98de-94854b6b8253",
+    "startDate": "2024-02-10",
+    "endDate": "2024-02-13",
+    "status": "CONFIRMED",
+    "owner": {
+        "name": "Marcus Wellford",
+        "email": "marcus.wellford@example.com"
+    },
+    "property": {
+        "id": "601e0800-a069-4672-a1e4-0f5eec0f9e9c",
+        "name": "A property",
+        "location": "Porto Alegre",
+        "description": "A property - description"
+    },
+    "guests": [
+        {
+            "id": "74d547a6-b090-4450-9d51-60f648dc35cc",
+            "name": "Guest1",
+            "email": "email1@guest1.com"
+        },
+        {
+            "id": "e54e5e77-be2f-4928-9e03-d8884145c811",
+            "name": "Guest2",
+            "email": "email2@email2.com"
+        }
+    ]
+}
+```
+
+
 ## Running automated tests
 
 ```bash
