@@ -30,6 +30,7 @@ public class BlockServiceImpl implements BlockService {
         validateBlockRequest(blockRequest);
 
         Property property = propertyService.getPropertyOrThrowException(blockRequest.getPropertyId());
+        securityService.authorizeBlock(property);
         Block block = new Block();
         block.setProperty(property);
         block.setStartDate(blockRequest.getStartDate());

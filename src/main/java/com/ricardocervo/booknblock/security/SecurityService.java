@@ -53,7 +53,9 @@ public class SecurityService {
     }
     public  void authorizeBlock(Property property) {
         if (!getLoggedUser().equals(property.getOwner())) {
-            throwGenericUnauthorizedException();
+            if (!property.getManagers().contains(getLoggedUser())) {
+                throwGenericUnauthorizedException();
+            }
         }
     }
 
