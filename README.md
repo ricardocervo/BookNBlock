@@ -18,8 +18,81 @@
 6. **Pre-existing User and Property Registration**:
    - It is assumed that the User and Property registration system already exists (potentially in another service). Therefore, this part was not implemented in the current system. A class named `DBPopulator` populates some **Properties** with their **owners/managers** when the application starts, providing sufficient data to test the main functionalities of the API.
 
+## Implementation
 
-# Booking API Documentation
+I implemented the solution for this challenge using **Java (version 17)**, **Spring Framework (version 3.2)** and **in-memory database H2**.
+
+Below is the ER diagram:
+
+![BookNBlock ER Diagram](https://github.com/ricardocervo/BookNBlock/blob/main/bnb-er.png)
+
+## Running the application
+
+Ensure you have **Java 17** and **Apache Maven** installed on your system. Verify that port 8080 is available. From the project's root directory, run the application using the following Maven command:
+
+## Running automated tests
+
+```bash
+mvn spring-boot:run
+```
+
+To run the automated tests we can use a maven command:
+```bash
+mvn test
+```
+Expected result:
+```bash
+
+...
+[INFO] Results:
+[INFO] 
+[INFO] Tests run: 70, Failures: 0, Errors: 0, Skipped: 0
+[INFO] 
+[INFO] ------------------------------------------------------------------------
+[INFO] BUILD SUCCESS
+[INFO] ------------------------------------------------------------------------
+[INFO] Total time:  6.987 s
+[INFO] Finished at: 2024-01-26T17:25:35-03:00
+[INFO] ------------------------------------------------------------------------
+```
+## API Documentation
+
+Below is the API documentation for all controllers of the application: **AuthenticationController**, **BookingController** and **BlockController**.
+
+## Authentication API Endpoints
+
+## Overview
+This endpoint is part of the authentication service, responsible for authenticating users. It uses JWT (JSON Web Token) for secure token generation after successful authentication.
+
+## Endpoint: Authenticate User
+
+### Method
+`POST`
+
+### Path
+`/authenticate`
+
+### Request Body: `AuthenticationRequest`
+- **email**: String (User's email)
+- **password**: String (User's password)
+
+### Response: `AuthenticationResponse`
+- **token**: String (JWT token for the authenticated user)
+- **user**: Object
+  - **name**: String (User's name)
+  - **email**: String (User's email)
+
+### Functionality
+- Validates user credentials (email and password) through an `AuthenticationManager`.
+- Fetches the user details from the `UserRepository` using the email provided in the request.
+- Generates a JWT token using `JwtService` if authentication is successful.
+- Constructs and returns an `AuthenticationResponse` containing the JWT token and user details.
+
+### Error Handling
+- If authentication fails (due to invalid credentials), an exception is thrown.
+- If the user's email is not found in the repository, an exception is thrown.
+
+## Booking API Endpoints 
 
 ## Overview
 The Booking API provides a set of endpoints for managing bookings, including creating, updating, canceling, and retrieving booking information.
@@ -103,10 +176,6 @@ The Booking API provides a set of endpoints for managing bookings, including cre
 - **Status Codes:**
   - `200 OK`: Booking successfully retrieved.
   - `404 Not Found`: Booking with the given ID not found.
-
-## Notes
-- `BookingRequestDto`, `BookingResponseDto`, `BookingDateUpdateDto`, and `BookingGuestUpdateDto` are data transfer objects (DTOs) used in requests and responses. Their structures depend on the application's business logic.
-- Clients should handle potential errors and status codes as per the API's response.
 
 
 # Block API Endpoints
