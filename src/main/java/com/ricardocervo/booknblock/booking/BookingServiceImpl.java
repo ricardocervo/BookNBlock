@@ -9,6 +9,7 @@ import com.ricardocervo.booknblock.guest.Guest;
 import com.ricardocervo.booknblock.guest.GuestDto;
 import com.ricardocervo.booknblock.guest.GuestRepository;
 import com.ricardocervo.booknblock.property.Property;
+import com.ricardocervo.booknblock.property.PropertyDto;
 import com.ricardocervo.booknblock.property.PropertyService;
 import com.ricardocervo.booknblock.security.SecurityService;
 import com.ricardocervo.booknblock.user.User;
@@ -20,9 +21,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -70,12 +69,12 @@ public class BookingServiceImpl implements BookingService {
 
 
     private void validateBookingRequest(BookingRequestDto bookingRequest) {
-        if (!bookingRequest.getIncludeLoggedUserAsGuest() && (bookingRequest.getGuests() == null || bookingRequest.getGuests().isEmpty())) {
-            throw new BadRequestException("If logged user is not a guest, you must provide at least one guest.");
-        }
-
         if (bookingRequest.getStartDate().isAfter(bookingRequest.getEndDate())) {
             throw new BadRequestException("End date must be greater or equal to start date");
+        }
+
+        if (bookingRequest.getStartDate().isBefore(LocalDate.now())) {
+            throw new BadRequestException("Start date must be greater or equal to today");
         }
 
     }
@@ -84,7 +83,11 @@ public class BookingServiceImpl implements BookingService {
         BookingResponseDto response = new BookingResponseDto();
         response.setId(newBooking.getId().toString());
         response.setGuests(newBooking.getGuests().stream().map(guest -> modelMapper.map(guest, GuestDto.class)).collect(Collectors.toList()));
-        response.setPropertyId(newBooking.getProperty().getId().toString());
+        response.setProperty(new PropertyDto(
+                newBooking.getProperty().getId(),
+                newBooking.getProperty().getName(),
+                newBooking.getProperty().getLocation(),
+                newBooking.getProperty().getDescription()));
         response.setEndDate(newBooking.getEndDate());
         response.setStartDate(newBooking.getStartDate());
         response.setStatus(newBooking.getStatus());
@@ -94,20 +97,27 @@ public class BookingServiceImpl implements BookingService {
 
 
     private List<Guest> buildGuestList(BookingRequestDto bookingRequest, User owner, Booking booking) {
-        List<Guest> guests = new ArrayList<>();
-        if (bookingRequest.getIncludeLoggedUserAsGuest()) {
-            guests.add(new Guest(UUID.randomUUID(), owner.getName(), owner.getEmail(), booking));
-        }
+        validateGuests(bookingRequest.getGuests());
 
-        if (bookingRequest.getGuests() != null) {
-            for (GuestDto guestDto : bookingRequest.getGuests()) {
-                Guest guest = modelMapper.map(guestDto, Guest.class);
-                guest.setBooking(booking);
-                guests.add(guest);
-            }
+        List<Guest> guests = new ArrayList<>();
+
+        for (GuestDto guestDto : bookingRequest.getGuests()) {
+            Guest guest = modelMapper.map(guestDto, Guest.class);
+            guest.setBooking(booking);
+            guests.add(guest);
         }
 
         return guests;
+    }
+
+    private void validateGuests(List<GuestDto> guests) {
+        Set<String> emailSet = new HashSet<>();
+
+        for (GuestDto guest : guests) {
+            if (!emailSet.add(guest.getEmail())) {
+                throw new BadRequestException("Duplicate email found: " + guest.getEmail());
+            }
+        }
     }
 
     private Booking validateAndSaveBooking(Booking booking) {

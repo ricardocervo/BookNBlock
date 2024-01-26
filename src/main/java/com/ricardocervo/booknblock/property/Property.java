@@ -10,6 +10,7 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
+import java.util.Set;
 import java.util.UUID;
 
 @Data
@@ -40,6 +41,14 @@ public class Property {
     @NotNull
     @Size(min = 3, max = 1000)
     private String description;
+
+    @ManyToMany
+    @JoinTable(
+            name = "property_managers",
+            joinColumns = @JoinColumn(name = "property_id"),
+            inverseJoinColumns = @JoinColumn(name = "user_id")
+    )
+    private Set<User> managers;
 
 }
 

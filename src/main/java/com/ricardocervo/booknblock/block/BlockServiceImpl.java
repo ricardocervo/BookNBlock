@@ -7,6 +7,7 @@ import com.ricardocervo.booknblock.exceptions.ConflictException;
 import com.ricardocervo.booknblock.exceptions.ResourceNotFoundException;
 import com.ricardocervo.booknblock.property.Property;
 import com.ricardocervo.booknblock.property.PropertyService;
+import com.ricardocervo.booknblock.security.SecurityService;
 import com.ricardocervo.booknblock.utils.DatesUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -21,6 +22,7 @@ public class BlockServiceImpl implements BlockService {
     private final BlockRepository blockRepository;
     private final PropertyService propertyService;
     private final BookingRepository bookingRepository;
+    private final SecurityService securityService;
 
     @Override
     @Transactional
@@ -45,6 +47,7 @@ public class BlockServiceImpl implements BlockService {
     @Override
     public BlockResponseDto updateBlock(UUID blockId, BlockUpdateDto blockUpdateDto) {
         Block block = getBlockOrThrowException(blockId);
+        securityService.authorizeBlock(block.getProperty());
 
         block.setStartDate(blockUpdateDto.getStartDate());
         block.setEndDate(blockUpdateDto.getEndDate());
@@ -59,6 +62,7 @@ public class BlockServiceImpl implements BlockService {
     @Override
     public void deleteBlock(UUID blockId) {
         Block block = getBlockOrThrowException(blockId);
+        securityService.authorizeBlock(block.getProperty());
         blockRepository.delete(block);
     }
 

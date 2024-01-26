@@ -3,6 +3,7 @@ package com.ricardocervo.booknblock.booking;
 import com.ricardocervo.booknblock.guest.Guest;
 import com.ricardocervo.booknblock.guest.GuestDto;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -25,7 +26,6 @@ public class BookingRequestDto {
     private LocalDate endDate;
 
     @NotNull
-    private Boolean includeLoggedUserAsGuest;
-
+    @Size(min = 1)
     private List<GuestDto> guests;
 }

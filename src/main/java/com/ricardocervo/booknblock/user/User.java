@@ -1,5 +1,6 @@
 package com.ricardocervo.booknblock.user;
 
+import com.ricardocervo.booknblock.property.Property;
 import com.ricardocervo.booknblock.role.Role;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
@@ -77,5 +78,8 @@ public class User implements UserDetails {
     public boolean isEnabled() {
         return true;
     }
+
+    @ManyToMany(mappedBy = "managers")
+    private Set<Property> managedProperties;
 }
 
