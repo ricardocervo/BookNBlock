@@ -77,6 +77,8 @@ public class BookingServiceImpl implements BookingService {
             throw new BadRequestException("Start date must be greater or equal to today");
         }
 
+        validateGuests(bookingRequest.getGuests());
+
     }
 
     private BookingResponseDto buildResponseDto(Booking newBooking) {
@@ -150,9 +152,11 @@ public class BookingServiceImpl implements BookingService {
         List<Block> blocks = blockService.findByProperty(booking.getProperty());
 
         return blocks.stream().anyMatch(block ->
-                !booking.getStartDate().isAfter(block.getEndDate()) &&
-                        !block.getStartDate().isBefore(booking.getEndDate())
-        );
+                DatesUtils.isOverlappingDates(
+                        booking.getStartDate(),
+                        booking.getEndDate(),
+                        block.getStartDate(),
+                        block.getEndDate()));
     }
 
 
@@ -255,6 +259,7 @@ public class BookingServiceImpl implements BookingService {
 
         return buildResponseDto(booking);
     }
+
 
 
 }

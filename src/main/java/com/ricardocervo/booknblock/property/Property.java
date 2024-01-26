@@ -5,10 +5,7 @@ import com.ricardocervo.booknblock.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 
 import java.util.Set;
 import java.util.UUID;
@@ -42,6 +39,7 @@ public class Property {
     @Size(min = 3, max = 1000)
     private String description;
 
+    @ToString.Exclude
     @ManyToMany
     @JoinTable(
             name = "property_managers",
