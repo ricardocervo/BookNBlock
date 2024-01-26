@@ -71,6 +71,9 @@ public class BookingControllerTest {
 
     private Property propertyTestOverLappingDates;
 
+    private User userTest1;
+    private User userTest2;
+
     @BeforeEach
     public void setUp() {
         blockRepository.deleteAll();
@@ -92,7 +95,7 @@ public class BookingControllerTest {
 
         Role roleAdmin = roleRepository.findByName("ROLE_ADMIN").get();
 
-        User userTest1 = new User();
+        userTest1 = new User();
         userTest1.setName("User Test 1");
         userTest1.setPassword("pass1");
         userTest1.setEmail("email1@email.com");
@@ -101,6 +104,17 @@ public class BookingControllerTest {
         userRepository.save(userTest1);
 
         users.add(userTest1);
+
+
+        userTest2 = new User();
+        userTest2.setName("User Test 2");
+        userTest2.setPassword("pass2");
+        userTest2.setEmail("email2@email.com");
+        userTest2.setRoles(new HashSet<>());
+        userTest2.getRoles().add(roleAdmin);
+        userRepository.save(userTest2);
+
+        users.add(userTest2);
 
         SecurityContextHolder.getContext().setAuthentication(
                 new UsernamePasswordAuthenticationToken(userTest1.getEmail(), userTest1.getPassword(), Collections.emptyList())
@@ -253,6 +267,20 @@ public class BookingControllerTest {
     }
 
     @Test
+    void cancelBooking_ShouldReturnUnauthorized_WhenUserIsNotBookingOwner() throws Exception {
+        Booking booking = createTestBooking();
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(userTest2.getEmail(), userTest2.getPassword(), Collections.emptyList())
+        );
+
+        mockMvc.perform(patch("/api/v1/bookings/" + booking.getId() + "/cancel")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnauthorized());
+
+    }
+
+    @Test
     void cancelBooking_ShouldReturnNotFound_WhenBookingNotExists() throws Exception {
 
         mockMvc.perform(patch("/api/v1/bookings/" + UUID.randomUUID() + "/cancel")
@@ -288,6 +316,24 @@ public class BookingControllerTest {
                 .andExpect(jsonPath("$.startDate").value(newStartDate.toString()))
                 .andExpect(jsonPath("$.endDate").value(newEndDate.toString()))
                 .andReturn();
+
+    }
+
+    @Test
+    void updateBookingDates_ShouldReturnUnauthorized_WhenUserIsNotBookingOwner() throws Exception {
+        Booking booking = createTestBooking();
+        LocalDate newStartDate = booking.getStartDate().plusDays(2);
+        LocalDate newEndDate = booking.getEndDate().plusDays(3);
+        BookingDateUpdateDto dateUpdateDto = new BookingDateUpdateDto(newStartDate, newEndDate);
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(userTest2.getEmail(), userTest2.getPassword(), Collections.emptyList())
+        );
+
+        mockMvc.perform(patch("/api/v1/bookings/" + booking.getId() + "/dates")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(dateUpdateDto)))
+                .andExpect(status().isUnauthorized());
 
     }
 
@@ -332,6 +378,27 @@ public class BookingControllerTest {
     }
 
     @Test
+    void updateBookingGuests_ShouldReturnUnauthorized_WhenUserIsNotBookingOwner() throws Exception {
+        Booking booking1 = createTestBooking(LocalDate.now().plusDays(3), LocalDate.now().plusDays(5));
+        bookingRepository.save(booking1);
+
+        BookingGuestUpdateDto guestUpdateDto = BookingGuestUpdateDto.builder()
+                .guests(List.of(GuestDto.builder().email("guest1@gmail.com").name("name1").build()))
+                .build();
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(userTest2.getEmail(), userTest2.getPassword(), Collections.emptyList())
+        );
+
+        mockMvc.perform(patch("/api/v1/bookings/" + booking1.getId() + "/guests")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(guestUpdateDto)))
+                .andExpect(status().isUnauthorized());
+
+    }
+
+
+    @Test
     void updateBookingGuests_ShouldReturnBadRequest_WhenGuestEmailIsNull() throws Exception {
         Booking booking1 = createTestBooking(LocalDate.now().plusDays(3), LocalDate.now().plusDays(5));
 
@@ -371,6 +438,24 @@ public class BookingControllerTest {
     }
 
     @Test
+    void rebook_ShouldReturnUnauthorized_WhenUserIsNotBookingOwner() throws Exception {
+        Booking booking1 = createTestBooking(LocalDate.now().plusDays(3), LocalDate.now().plusDays(5));
+        booking1.setStatus(BookingStatus.CANCELED);
+        bookingRepository.save(booking1);
+
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(userTest2.getEmail(), userTest2.getPassword(), Collections.emptyList())
+        );
+
+        mockMvc.perform(patch("/api/v1/bookings/" + booking1.getId() + "/rebook")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnauthorized());
+
+
+    }
+
+    @Test
     void rebook_ShouldReturnConflict_WhenOverlappingDates() throws Exception {
         Booking booking1 = createTestBooking(LocalDate.now().plusDays(3), LocalDate.now().plusDays(5));
         booking1.setStatus(BookingStatus.CANCELED);
@@ -405,6 +490,22 @@ public class BookingControllerTest {
         mockMvc.perform(delete("/api/v1/bookings/" + booking1.getId())
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isNoContent());
+
+    }
+
+
+    @Test
+    void delete_ShouldReturnUnauthorized_WhenUserIsNotBookingOwner() throws Exception {
+        Booking booking1 = createTestBooking(LocalDate.now().plusDays(3), LocalDate.now().plusDays(5));
+        bookingRepository.save(booking1);
+
+        SecurityContextHolder.getContext().setAuthentication(
+                new UsernamePasswordAuthenticationToken(userTest2.getEmail(), userTest2.getPassword(), Collections.emptyList())
+        );
+
+        mockMvc.perform(delete("/api/v1/bookings/" + booking1.getId())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isUnauthorized());
 
     }
 
