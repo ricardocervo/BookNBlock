@@ -55,7 +55,7 @@ Expected result:
 [INFO] Finished at: 2024-01-26T17:25:35-03:00
 [INFO] ------------------------------------------------------------------------
 ```
-## API Documentation
+## BookNBlock API Documentation
 
 Below is the API documentation for all controllers of the application: **AuthenticationController**, **BookingController** and **BlockController**.
 
