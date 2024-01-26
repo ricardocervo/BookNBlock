@@ -117,6 +117,38 @@ If all input fields are valid and the Property exists in the database, the respo
     ]
 }
 ```
+### Creating a block:
+
+To create a block, the authenticated user must be either the Owner or one of the Managers of the property. In the DBPopulator class, some properties along with their managers and owners are already created.
+
+Assuming the user is logged in (passing the token in the Authorization header of the request), the following is an example of how to create a Block:
+
+```
+POST http://localhost:8080/api/v1/blocks
+```
+
+Request Body:
+
+```
+{
+    "propertyId": "601e0800-a069-4672-a1e4-0f5eec0f9e9c",
+    "startDate": "2024-02-19",
+    "endDate": "2024-02-20",
+    "reason": "Property renovation"
+}
+```
+
+Expected Response:
+
+```
+{
+    "id": "47c96c59-ccb4-4d5a-8fce-9013216271c7",
+    "propertyId": "601e0800-a069-4672-a1e4-0f5eec0f9e9c",
+    "startDate": "2024-02-19",
+    "endDate": "2024-02-20",
+    "reason": "Property renovation"
+}
+```
 
 
 ## Running automated tests
