@@ -150,6 +150,20 @@ Expected Response:
 }
 ```
 
+### Authorization control
+
+When a user tries to perform an action for which they don't have permission (for example, trying to create a Block for a property where they are neither the Manager nor the Owner), they will receive an HTTP 401 - Unauthorized as a response:
+
+```
+{
+    "httpStatus": 401,
+    "httpError": "Unauthorized",
+    "timestamp": "2024-01-26T18:08:02.429528",
+    "message": "You are not allowed to access this resource"
+}
+```
+
+This also happens if a User tries to update, cancel, or delete a Booking that they didn't create.
 
 ## Running automated tests
 
