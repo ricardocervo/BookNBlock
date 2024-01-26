@@ -237,19 +237,106 @@ public class BookingControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(asJsonString(dateUpdateDto)))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").value(booking.getId()))
+                .andExpect(jsonPath("$.id").value(booking.getId().toString()))
                 .andExpect(jsonPath("$.startDate").value(newStartDate.toString()))
                 .andExpect(jsonPath("$.endDate").value(newEndDate.toString()))
                 .andReturn();
 
     }
 
+    @Test
+    void updateBookingDates_ShouldReturnConflict_WhenOverlappingDateWithAnotherBooking() throws Exception {
+        Booking booking1 = createTestBooking(LocalDate.now().plusDays(3), LocalDate.now().plusDays(5));
+        Booking booking2 = createTestBooking(LocalDate.now(), LocalDate.now().plusDays(1));
+
+        LocalDate newStartDate = booking1.getStartDate();
+        LocalDate newEndDate = booking1.getEndDate().plusDays(1);
+
+        BookingDateUpdateDto dateUpdateDto = new BookingDateUpdateDto(newStartDate, newEndDate);
+
+        mockMvc.perform(patch("/api/v1/bookings/" + booking2.getId() + "/dates")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(dateUpdateDto)))
+                .andExpect(status().isConflict())
+                .andReturn();
+
+    }
+
+
+    @Test
+    void updateBookingGuests_ShouldReturnOk_WhenRequestIsValid() throws Exception {
+        Booking booking1 = createTestBooking(LocalDate.now().plusDays(3), LocalDate.now().plusDays(5));
+
+        BookingGuestUpdateDto guestUpdateDto = BookingGuestUpdateDto.builder()
+                .guests(List.of(GuestDto.builder().email("guest1@gmail.com").name("name1").build()))
+                .build();
+
+        String guestUpdateJson = asJsonString(guestUpdateDto);
+
+        mockMvc.perform(patch("/api/v1/bookings/" + booking1.getId() + "/guests")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(guestUpdateJson))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(booking1.getId().toString()))
+                .andExpect(jsonPath("$.guests", hasSize(1)))
+                .andExpect(jsonPath("$.guests[0].name").value("name1"))
+                .andExpect(jsonPath("$.guests[0].email").value("guest1@gmail.com"))
+                .andDo(print());
+    }
+
+    @Test
+    void updateBookingGuests_ShouldReturnBadRequest_WhenGuestEmailIsNull() throws Exception {
+        Booking booking1 = createTestBooking(LocalDate.now().plusDays(3), LocalDate.now().plusDays(5));
+
+        BookingGuestUpdateDto guestUpdateDto = BookingGuestUpdateDto.builder()
+                .guests(List.of(GuestDto.builder().email(null).name("name1").build()))
+                .build();
+
+        String guestUpdateJson = asJsonString(guestUpdateDto);
+
+        mockMvc.perform(patch("/api/v1/bookings/" + booking1.getId() + "/guests")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(guestUpdateJson))
+                .andExpect(status().isBadRequest())
+                .andDo(print());
+    }
+
+    @Test
+    void rebook_ShouldReturnOk_WhenRequestIsValid() throws Exception {
+        Booking booking1 = createTestBooking(LocalDate.now().plusDays(3), LocalDate.now().plusDays(5));
+        booking1.setStatus(BookingStatus.CANCELED);
+        bookingRepository.save(booking1);
+
+        MvcResult mvcResult = mockMvc.perform(patch("/api/v1/bookings/" + booking1.getId() + "/rebook")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(booking1.getId().toString()))
+                .andExpect(jsonPath("$.startDate").value(booking1.getStartDate().toString()))
+                .andExpect(jsonPath("$.endDate").value(booking1.getEndDate().toString()))
+                .andExpect(jsonPath("$.status").value(BookingStatus.CONFIRMED.toString()))
+                .andExpect(jsonPath("$.owner.name").value(booking1.getOwner().getName()))
+                .andExpect(jsonPath("$.owner.email").value(booking1.getOwner().getEmail()))
+                .andExpect(jsonPath("$.property.id").value(booking1.getProperty().getId().toString()))
+                .andExpect(jsonPath("$.property.name").value(booking1.getProperty().getName()))
+                .andExpect(jsonPath("$.property.location").value(booking1.getProperty().getLocation()))
+                .andExpect(jsonPath("$.property.description").value(booking1.getProperty().getDescription()))
+                .andReturn();
+
+        String contentAsString = mvcResult.getResponse().getContentAsString();
+        System.out.println(contentAsString);
+    }
 
 
     private Booking createTestBooking() {
+        LocalDate startDate = LocalDate.now();
+        LocalDate endDate = LocalDate.now().plusDays(5);
+        return createTestBooking(startDate, endDate);
+    }
+
+    private Booking createTestBooking(LocalDate startDate, LocalDate endDate) {
         BookingRequestDto bookingRequest = new BookingRequestDto();
-        bookingRequest.setStartDate(LocalDate.now());
-        bookingRequest.setEndDate(LocalDate.now().plusDays(5));
+        bookingRequest.setStartDate(startDate);
+        bookingRequest.setEndDate(endDate);
         bookingRequest.setGuests(Collections.singletonList(GuestDto.builder().name("Guest 1").email("email@email.com").build()));
         bookingRequest.setPropertyId(property1.getId());
         BookingResponseDto response = bookingService.createBooking(bookingRequest);
