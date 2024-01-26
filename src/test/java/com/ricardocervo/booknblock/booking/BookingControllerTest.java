@@ -2,6 +2,7 @@ package com.ricardocervo.booknblock.booking;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.ricardocervo.booknblock.block.*;
 import com.ricardocervo.booknblock.guest.GuestDto;
 import com.ricardocervo.booknblock.property.Property;
 import com.ricardocervo.booknblock.property.PropertyRepository;
@@ -27,9 +28,8 @@ import java.time.LocalDate;
 import java.util.*;
 
 import static org.hamcrest.Matchers.hasSize;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -58,6 +58,12 @@ public class BookingControllerTest {
     @Autowired
     private PropertyRepository propertyRepository;
 
+    @Autowired
+    private BlockRepository blockRepository;
+
+    @Autowired
+    private BlockService blockService;
+
     private List<User> users = new ArrayList<>();
     private Property property1;
 
@@ -67,10 +73,10 @@ public class BookingControllerTest {
 
     @BeforeEach
     public void setUp() {
+        blockRepository.deleteAll();
         bookingRepository.deleteAll();
         propertyRepository.deleteAll();
         userRepository.deleteAll();
-
 
 
         List<String> roles = Arrays.asList("ROLE_USER", "ROLE_ADMIN");
@@ -122,7 +128,7 @@ public class BookingControllerTest {
         propertyTestOverLappingDates.setName("Property2");
         propertyTestOverLappingDates.setDescription("Property2 - description");
         propertyTestOverLappingDates.setLocation("New York");
-        propertyTestOverLappingDates  = propertyRepository.save(propertyTestOverLappingDates);
+        propertyTestOverLappingDates = propertyRepository.save(propertyTestOverLappingDates);
 
     }
 
@@ -152,11 +158,52 @@ public class BookingControllerTest {
     }
 
     @Test
+    void createBooking_ShouldReturnConflict_WhenBlockExists() throws Exception {
+        LocalDate blockStartDate = LocalDate.now().plusDays(3);
+        LocalDate blockEndDate = LocalDate.now().plusDays(5);
+        Block block = createTestBlock(property1, blockStartDate, blockEndDate);
+
+
+        LocalDate startDate = LocalDate.now();
+        LocalDate endDate = LocalDate.now().plusDays(5);
+
+        BookingRequestDto bookingRequestDto = new BookingRequestDto(
+                property1.getId(), startDate, endDate,
+                Collections.singletonList(GuestDto.builder().name("Guest 1").email("email1@gmail1.com").build()));
+
+         mockMvc.perform(post("/api/v1/bookings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(bookingRequestDto)))
+                .andExpect(status().isConflict());
+    }
+
+
+
+
+    @Test
+    void createBooking_ShouldReturnConflict_WhenOverlappingDates() throws Exception {
+        Booking booking1 = createTestBooking(LocalDate.now().plusDays(3), LocalDate.now().plusDays(5));
+
+        LocalDate startDate = LocalDate.now();
+        LocalDate endDate = LocalDate.now().plusDays(5);
+
+        BookingRequestDto bookingRequestDto = new BookingRequestDto(
+                property1.getId(), startDate, endDate,
+                Collections.singletonList(GuestDto.builder().name("Guest 1").email("email1@gmail1.com").build()));
+
+        mockMvc.perform(post("/api/v1/bookings")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(bookingRequestDto)))
+                .andExpect(status().isConflict());
+    }
+
+
+    @Test
     void createBooking_ShouldReturnBadRequest_NoGuests() throws Exception {
         LocalDate startDate = LocalDate.now();
         LocalDate endDate = LocalDate.now().plusDays(5);
 
-        BookingRequestDto bookingRequestDto = new BookingRequestDto(property1.getId(), startDate, endDate,  null);
+        BookingRequestDto bookingRequestDto = new BookingRequestDto(property1.getId(), startDate, endDate, null);
 
         MvcResult mvcResult = mockMvc.perform(post("/api/v1/bookings")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -183,7 +230,7 @@ public class BookingControllerTest {
 
     @Test
     void cancelBooking_ShouldReturnOk_WhenBookingExists() throws Exception {
-       Booking booking = createTestBooking();
+        Booking booking = createTestBooking();
 
         mockMvc.perform(patch("/api/v1/bookings/" + booking.getId() + "/cancel")
                         .contentType(MediaType.APPLICATION_JSON))
@@ -297,8 +344,7 @@ public class BookingControllerTest {
         mockMvc.perform(patch("/api/v1/bookings/" + booking1.getId() + "/guests")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(guestUpdateJson))
-                .andExpect(status().isBadRequest())
-                .andDo(print());
+                .andExpect(status().isBadRequest());
     }
 
     @Test
@@ -307,7 +353,7 @@ public class BookingControllerTest {
         booking1.setStatus(BookingStatus.CANCELED);
         bookingRepository.save(booking1);
 
-        MvcResult mvcResult = mockMvc.perform(patch("/api/v1/bookings/" + booking1.getId() + "/rebook")
+        mockMvc.perform(patch("/api/v1/bookings/" + booking1.getId() + "/rebook")
                         .contentType(MediaType.APPLICATION_JSON))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.id").value(booking1.getId().toString()))
@@ -319,13 +365,88 @@ public class BookingControllerTest {
                 .andExpect(jsonPath("$.property.id").value(booking1.getProperty().getId().toString()))
                 .andExpect(jsonPath("$.property.name").value(booking1.getProperty().getName()))
                 .andExpect(jsonPath("$.property.location").value(booking1.getProperty().getLocation()))
-                .andExpect(jsonPath("$.property.description").value(booking1.getProperty().getDescription()))
-                .andReturn();
+                .andExpect(jsonPath("$.property.description").value(booking1.getProperty().getDescription()));
 
-        String contentAsString = mvcResult.getResponse().getContentAsString();
-        System.out.println(contentAsString);
+
     }
 
+    @Test
+    void rebook_ShouldReturnConflict_WhenOverlappingDates() throws Exception {
+        Booking booking1 = createTestBooking(LocalDate.now().plusDays(3), LocalDate.now().plusDays(5));
+        booking1.setStatus(BookingStatus.CANCELED);
+        bookingRepository.save(booking1);
+
+        Booking booking2 = createTestBooking(LocalDate.now().plusDays(3), LocalDate.now().plusDays(5));
+        bookingRepository.save(booking2);
+
+
+        mockMvc.perform(patch("/api/v1/bookings/" + booking1.getId() + "/rebook")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isConflict())
+                .andReturn();
+
+    }
+
+    @Test
+    void rebook_ShouldReturnConflict_OverlappedDates() throws Exception {
+        Booking booking1 = createTestBooking(LocalDate.now().plusDays(3), LocalDate.now().plusDays(5));
+        bookingRepository.save(booking1);
+
+        mockMvc.perform(patch("/api/v1/bookings/" + booking1.getId() + "/rebook")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void delete_ShouldReturnOk_WhenRequestIsValid() throws Exception {
+        Booking booking1 = createTestBooking(LocalDate.now().plusDays(3), LocalDate.now().plusDays(5));
+        bookingRepository.save(booking1);
+
+        mockMvc.perform(delete("/api/v1/bookings/" + booking1.getId())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNoContent());
+
+    }
+
+    @Test
+    void delete_ShouldReturnNotFound_WhenBookingNotExists() throws Exception {
+
+        mockMvc.perform(delete("/api/v1/bookings/" + UUID.randomUUID())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+
+    }
+
+    @Test
+    void getBooking_ShouldReturnOk_WhenRequestIsValid() throws Exception {
+        Booking booking1 = createTestBooking(LocalDate.now().plusDays(3), LocalDate.now().plusDays(5));
+        booking1 = bookingRepository.findByIdWithGuests(booking1.getId()).get();
+
+        mockMvc.perform(get("/api/v1/bookings/" + booking1.getId())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(booking1.getId().toString()))
+                .andExpect(jsonPath("$.startDate").value(booking1.getStartDate().toString()))
+                .andExpect(jsonPath("$.endDate").value(booking1.getEndDate().toString()))
+                .andExpect(jsonPath("$.status").value(BookingStatus.CONFIRMED.toString()))
+                .andExpect(jsonPath("$.owner.name").value(booking1.getOwner().getName()))
+                .andExpect(jsonPath("$.owner.email").value(booking1.getOwner().getEmail()))
+                .andExpect(jsonPath("$.property.id").value(booking1.getProperty().getId().toString()))
+                .andExpect(jsonPath("$.property.name").value(booking1.getProperty().getName()))
+                .andExpect(jsonPath("$.property.location").value(booking1.getProperty().getLocation()))
+                .andExpect(jsonPath("$.guests", hasSize(booking1.getGuests().size())))
+                .andExpect(jsonPath("$.property.description").value(booking1.getProperty().getDescription()));
+
+    }
+
+    @Test
+    void getBooking_ShouldReturnNotFound_WhenBookingNotExists() throws Exception {
+
+        mockMvc.perform(get("/api/v1/bookings/" + UUID.randomUUID())
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound());
+
+    }
 
     private Booking createTestBooking() {
         LocalDate startDate = LocalDate.now();
@@ -341,6 +462,25 @@ public class BookingControllerTest {
         bookingRequest.setPropertyId(property1.getId());
         BookingResponseDto response = bookingService.createBooking(bookingRequest);
         return bookingRepository.findById(UUID.fromString(response.getId())).get();
+
+    }
+
+    private Block createTestBlock(Property property) {
+        LocalDate startDate = LocalDate.now();
+        LocalDate endDate = LocalDate.now().plusDays(5);
+        return createTestBlock(property, startDate, endDate);
+    }
+
+    private Block createTestBlock(Property property, LocalDate startDate, LocalDate endDate) {
+        BlockRequestDto blockRequest = new BlockRequestDto();
+
+        blockRequest.setStartDate(startDate);
+        blockRequest.setEndDate(endDate);
+        blockRequest.setPropertyId(property.getId());
+        blockRequest.setReason("Paint the room");
+
+        BlockResponseDto response = blockService.createBlock(blockRequest);
+        return blockRepository.findById(response.getId()).get();
 
     }
 

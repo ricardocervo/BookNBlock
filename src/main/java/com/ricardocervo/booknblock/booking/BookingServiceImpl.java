@@ -152,9 +152,11 @@ public class BookingServiceImpl implements BookingService {
         List<Block> blocks = blockService.findByProperty(booking.getProperty());
 
         return blocks.stream().anyMatch(block ->
-                !booking.getStartDate().isAfter(block.getEndDate()) &&
-                        !block.getStartDate().isBefore(booking.getEndDate())
-        );
+                DatesUtils.isOverlappingDates(
+                        booking.getStartDate(),
+                        booking.getEndDate(),
+                        block.getStartDate(),
+                        block.getEndDate()));
     }
 
 
