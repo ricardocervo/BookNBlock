@@ -5,57 +5,58 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
-
 
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<List<String>> handleValidationExceptions(MethodArgumentNotValidException ex) {
-
+    public ResponseEntity<ErrorDetails> handleValidationExceptions(MethodArgumentNotValidException ex) {
         List<String> errors = ex.getBindingResult()
                 .getFieldErrors()
                 .stream()
                 .map(fieldError -> fieldError.getField() + " - "  + fieldError.getDefaultMessage())
                 .collect(Collectors.toList());
 
-
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errors);
+        return buildResponseEntity(HttpStatus.BAD_REQUEST, "Input field validation has failed", errors);
     }
 
     @ExceptionHandler(BadRequestException.class)
-    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
-    public ResponseEntity<String> handleBadRequestException(BadRequestException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    public ResponseEntity<ErrorDetails> handleBadRequestException(BadRequestException ex) {
+        return buildResponseEntity(HttpStatus.BAD_REQUEST, ex.getMessage(), null);
     }
 
     @ExceptionHandler(ConflictException.class)
-    @ResponseStatus(value = HttpStatus.CONFLICT)
-    public ResponseEntity<String> handleConflictException(ConflictException ex) {
-        return ResponseEntity.status(HttpStatus.CONFLICT).body(ex.getMessage());
+    public ResponseEntity<ErrorDetails> handleConflictException(ConflictException ex) {
+        return buildResponseEntity(HttpStatus.CONFLICT, ex.getMessage(), null);
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    @ResponseStatus(value = HttpStatus.NOT_FOUND)
-    public ResponseEntity<String> handleResourceNotFoundException(ResourceNotFoundException ex) {
-        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(ex.getMessage());
+    public ResponseEntity<ErrorDetails> handleResourceNotFoundException(ResourceNotFoundException ex) {
+        return buildResponseEntity(HttpStatus.NOT_FOUND, ex.getMessage(), null);
     }
 
     @ExceptionHandler(IllegalArgumentException.class)
-    @ResponseStatus(value = HttpStatus.BAD_REQUEST)
-    public ResponseEntity<String> handleIllegalArgumentException(IllegalArgumentException ex) {
-        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(ex.getMessage());
+    public ResponseEntity<ErrorDetails> handleIllegalArgumentException(IllegalArgumentException ex) {
+        return buildResponseEntity(HttpStatus.BAD_REQUEST, ex.getMessage(), null);
     }
 
     @ExceptionHandler(UnauthorizedException.class)
-    @ResponseStatus(value = HttpStatus.UNAUTHORIZED)
-    public ResponseEntity<String> handleUnauthorizedException(UnauthorizedException ex) {
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(ex.getMessage());
+    public ResponseEntity<ErrorDetails> handleUnauthorizedException(UnauthorizedException ex) {
+        return buildResponseEntity(HttpStatus.UNAUTHORIZED, ex.getMessage(), null);
     }
 
+    private ResponseEntity<ErrorDetails> buildResponseEntity(HttpStatus status, String message, List<String> details) {
+        ErrorDetails errorDetails = new ErrorDetails();
+        errorDetails.setHttpError(status.getReasonPhrase());
+        errorDetails.setHttpStatus(status.value());
+        errorDetails.setTimestamp(LocalDateTime.now());
+        errorDetails.setMessage(message);
+        errorDetails.setDetails(details);
+
+        return ResponseEntity.status(status).body(errorDetails);
+    }
 }
