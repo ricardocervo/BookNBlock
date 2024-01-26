@@ -127,9 +127,10 @@ public class BookingControllerTest {
     void createBooking_ShouldReturnOk_WhenRequestIsValid() throws Exception {
         LocalDate startDate = LocalDate.now();
         LocalDate endDate = LocalDate.now().plusDays(5);
-        Boolean includeLoggedUserAsGuest = true;
 
-        BookingRequestDto bookingRequestDto = new BookingRequestDto(property1.getId(), startDate, endDate, includeLoggedUserAsGuest, null);
+        BookingRequestDto bookingRequestDto = new BookingRequestDto(
+                property1.getId(), startDate, endDate,
+                Collections.singletonList(GuestDto.builder().name("Guest 1").email("email1@gmail1.com").build()));
 
         MvcResult mvcResult = mockMvc.perform(post("/api/v1/bookings")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -141,10 +142,9 @@ public class BookingControllerTest {
                 .andExpect(jsonPath("$.status").value(BookingStatus.CONFIRMED.toString()))
                 .andExpect(jsonPath("$.owner.name").value(users.get(0).getName()))
                 .andExpect(jsonPath("$.owner.email").value(users.get(0).getEmail()))
-                .andExpect(jsonPath("$.guests[0].id").exists())
-                .andExpect(jsonPath("$.guests[0].name").value(users.get(0).getName()))
-                .andExpect(jsonPath("$.guests[0].email").value(users.get(0).getEmail()))
-                .andDo(print()) // Optional: Print result to console
+                .andExpect(jsonPath("$.guests", hasSize(1)))
+                .andExpect(jsonPath("$.guests[0].name").value("Guest 1"))
+                .andExpect(jsonPath("$.guests[0].email").value("email1@gmail1.com"))
                 .andReturn();
     }
 
@@ -152,9 +152,8 @@ public class BookingControllerTest {
     void createBooking_ShouldReturnBadRequest_NoGuests() throws Exception {
         LocalDate startDate = LocalDate.now();
         LocalDate endDate = LocalDate.now().plusDays(5);
-        Boolean includeLoggedUserAsGuest = false;
 
-        BookingRequestDto bookingRequestDto = new BookingRequestDto(property1.getId(), startDate, endDate, includeLoggedUserAsGuest, null);
+        BookingRequestDto bookingRequestDto = new BookingRequestDto(property1.getId(), startDate, endDate,  null);
 
         MvcResult mvcResult = mockMvc.perform(post("/api/v1/bookings")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -164,23 +163,18 @@ public class BookingControllerTest {
     }
 
     @Test
-    void createBooking_ShouldReturnOk_WhenLoggedUserIsNotAGuestButThereAreOtherGuests() throws Exception {
+    void createBooking_ShouldReturnBadRequest_TwoGuestsSameEmail() throws Exception {
         LocalDate startDate = LocalDate.now();
         LocalDate endDate = LocalDate.now().plusDays(5);
-        Boolean includeLoggedUserAsGuest = false;
-
+        String sameEmail = "email1@gmail.com";
         BookingRequestDto bookingRequestDto = new BookingRequestDto(
-                property1.getId(), startDate, endDate, includeLoggedUserAsGuest,
-                Collections.singletonList(GuestDto.builder().name("Guest 1").email("email1@gmail1.com").build()));
+                property1.getId(), startDate, endDate,
+                Arrays.asList(GuestDto.builder().name("Guest 1").email(sameEmail).build(), GuestDto.builder().name("Guest 2").email(sameEmail).build()));
 
         mockMvc.perform(post("/api/v1/bookings")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(asJsonString(bookingRequestDto)))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.id").exists())
-                .andExpect(jsonPath("$.guests", hasSize(1))) // Check that there is exactly one guest
-                .andExpect(jsonPath("$.guests[0].name").value("Guest 1"))
-                .andExpect(jsonPath("$.guests[0].email").value("email1@gmail1.com"))
+                .andExpect(status().isBadRequest())
                 .andReturn();
     }
 

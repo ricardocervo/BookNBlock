@@ -77,6 +77,8 @@ public class BookingServiceImpl implements BookingService {
             throw new BadRequestException("Start date must be greater or equal to today");
         }
 
+        validateGuests(bookingRequest.getGuests());
+
     }
 
     private BookingResponseDto buildResponseDto(Booking newBooking) {
