@@ -16,7 +16,7 @@
    - The API's date control is day-based. For example, if a user checks in today and checks out tomorrow (a one-night stay), only today's date will be considered occupied in the backend.
 
 6. **Pre-existing User and Property Registration**:
-   - It is assumed that the User and Property registration system already exists (potentially in another service). Therefore, this part was not implemented in the current system. A class named `DBPopulator` populates some properties with their owners/managers when the application starts, providing sufficient data to test the main functionalities of the API.
+   - It is assumed that the User and Property registration system already exists (potentially in another service). Therefore, this part was not implemented in the current system. A class named `DBPopulator` populates some **Properties** with their **owners/managers** when the application starts, providing sufficient data to test the main functionalities of the API.
 
 
 # Booking API Documentation
