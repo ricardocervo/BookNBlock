@@ -149,6 +149,20 @@ Expected Response:
     "reason": "Property renovation"
 }
 ```
+### Overlapping dates control
+
+If a user tries to create a booking whose dates conflict with a block or another non-cancelled booking, they will receive a HTTP 409 - Conflict response:
+```
+{
+    "httpStatus": 409,
+    "httpError": "Conflict",
+    "timestamp": "2024-01-26T18:12:45.744822",
+    "message": "Booking dates are overlapping with an existing booking."
+}
+``` 
+
+Same will happen if a Manager tries to create a block that conflicts with another block or another booking in the same dates.
+
 
 ### Authorization control
 
