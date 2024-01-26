@@ -22,11 +22,14 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 import org.springframework.web.context.WebApplicationContext;
 
+import java.awt.print.Book;
 import java.time.LocalDate;
 import java.util.*;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
+
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -178,6 +181,81 @@ public class BookingControllerTest {
                 .andReturn();
     }
 
+    @Test
+    void cancelBooking_ShouldReturnOk_WhenBookingExists() throws Exception {
+       Booking booking = createTestBooking();
+
+        mockMvc.perform(patch("/api/v1/bookings/" + booking.getId() + "/cancel")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(booking.getId().toString()))
+                .andExpect(jsonPath("$.startDate").value(booking.getStartDate().toString()))
+                .andExpect(jsonPath("$.endDate").value(booking.getEndDate().toString()))
+                .andExpect(jsonPath("$.status").value("CANCELED"))
+                .andExpect(jsonPath("$.owner.name").value("User Test 1"))
+                .andExpect(jsonPath("$.owner.email").value("email1@email.com"))
+                .andExpect(jsonPath("$.property.id").value(booking.getProperty().getId().toString()))
+                .andExpect(jsonPath("$.property.name").value("Property1"))
+                .andExpect(jsonPath("$.property.location").value("Porto Alegre"))
+                .andExpect(jsonPath("$.property.description").value("Property1 - description"))
+                .andExpect(jsonPath("$.guests", hasSize(1)))
+                .andExpect(jsonPath("$.guests[0].name").value("Guest 1"))
+                .andExpect(jsonPath("$.guests[0].email").value("email@email.com"))
+                .andReturn();
+
+    }
+
+    @Test
+    void cancelBooking_ShouldReturnNotFound_WhenBookingNotExists() throws Exception {
+
+        mockMvc.perform(patch("/api/v1/bookings/" + UUID.randomUUID() + "/cancel")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isNotFound())
+                .andReturn();
+
+    }
+
+    @Test
+    void cancelBooking_ShouldReturnBadRequest_InvalidUUID() throws Exception {
+
+        mockMvc.perform(patch("/api/v1/bookings/" + "invalid_uuid" + "/cancel")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isBadRequest())
+                .andReturn();
+
+    }
+
+
+    @Test
+    void updateBookingDates_ShouldReturnOk_WhenRequestIsValid() throws Exception {
+        Booking booking = createTestBooking();
+        LocalDate newStartDate = booking.getStartDate().plusDays(2);
+        LocalDate newEndDate = booking.getEndDate().plusDays(3);
+        BookingDateUpdateDto dateUpdateDto = new BookingDateUpdateDto(newStartDate, newEndDate);
+
+        mockMvc.perform(patch("/api/v1/bookings/" + booking.getId() + "/dates")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(dateUpdateDto)))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.id").value(booking.getId()))
+                .andExpect(jsonPath("$.startDate").value(newStartDate.toString()))
+                .andExpect(jsonPath("$.endDate").value(newEndDate.toString()))
+                .andReturn();
+
+    }
+
+
+
+    private Booking createTestBooking() {
+        BookingRequestDto bookingRequest = new BookingRequestDto();
+        bookingRequest.setStartDate(LocalDate.now());
+        bookingRequest.setEndDate(LocalDate.now().plusDays(5));
+        bookingRequest.setGuests(Collections.singletonList(GuestDto.builder().name("Guest 1").email("email@email.com").build()));
+        bookingRequest.setPropertyId(property1.getId());
+        BookingResponseDto response = bookingService.createBooking(bookingRequest);
+        return bookingRepository.findById(UUID.fromString(response.getId())).get();
+
+    }
 
 
     // Utility method to convert object to JSON string
