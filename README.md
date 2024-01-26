@@ -1,3 +1,24 @@
+# Assumptions for Booking and Block Management
+
+1. **Manager and Owner Interchangeability**:
+   - A manager can change a block that the owner created and vice versa.
+
+2. **Multiple Guests in a Booking**:
+   - A booking can include more than one guest.
+
+3. **Booking Ownership**:
+   - The user who creates the booking is considered the owner of the booking. Only the booking owner can make modifications such as updating dates, cancellation, rebooking, etc.
+
+4. **Owner and Guest Distinction**:
+   - The booking owner is not necessarily one of the guests. For example, a user might make a reservation for someone else in their family.
+
+5. **Date Control Methodology**:
+   - The API's date control is day-based. For example, if a user checks in today and checks out tomorrow (a one-night stay), only today's date will be considered occupied in the backend.
+
+6. **Pre-existing User and Property Registration**:
+   - It is assumed that the User and Property registration system already exists (potentially in another service). Therefore, this part was not implemented in the current system. A class named `DBPopulator` populates some properties with their owners/managers when the application starts, providing sufficient data to test the main functionalities of the API.
+
+
 # Booking API Documentation
 
 ## Overview
