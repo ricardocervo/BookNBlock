@@ -1,30 +1,22 @@
 package com.ricardocervo.booknblock.booking;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.ricardocervo.booknblock.block.*;
+import com.ricardocervo.booknblock.BaseTest;
+import com.ricardocervo.booknblock.block.Block;
+import com.ricardocervo.booknblock.block.BlockRequestDto;
+import com.ricardocervo.booknblock.block.BlockResponseDto;
 import com.ricardocervo.booknblock.guest.GuestDto;
 import com.ricardocervo.booknblock.property.Property;
-import com.ricardocervo.booknblock.property.PropertyRepository;
-import com.ricardocervo.booknblock.role.Role;
-import com.ricardocervo.booknblock.role.RoleRepository;
-import com.ricardocervo.booknblock.user.User;
-import com.ricardocervo.booknblock.user.UserRepository;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
-import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
-import org.springframework.web.context.WebApplicationContext;
 
 import java.time.LocalDate;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
 
 import static org.hamcrest.Matchers.hasSize;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -32,117 +24,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-@SpringBootTest
-@AutoConfigureMockMvc
-public class BookingControllerTest {
 
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private WebApplicationContext webApplicationContext;
-
-    @Autowired
-    private BookingService bookingService;
-
-    @Autowired
-    private BookingRepository bookingRepository;
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private RoleRepository roleRepository;
-
-    @Autowired
-    private PropertyRepository propertyRepository;
-
-    @Autowired
-    private BlockRepository blockRepository;
-
-    @Autowired
-    private BlockService blockService;
-
-    private List<User> users = new ArrayList<>();
-    private Property property1;
-
-    private Property property2;
-
-    private Property propertyTestOverLappingDates;
-
-    private User userTest1;
-    private User userTest2;
-
-    @BeforeEach
-    public void setUp() {
-        blockRepository.deleteAll();
-        bookingRepository.deleteAll();
-        propertyRepository.deleteAll();
-        userRepository.deleteAll();
-
-
-        List<String> roles = Arrays.asList("ROLE_USER", "ROLE_ADMIN");
-
-        roles.forEach(roleName -> {
-            Optional<Role> existingRole = roleRepository.findByName(roleName);
-            if (existingRole.isEmpty()) {
-                Role newRole = new Role();
-                newRole.setName(roleName);
-                roleRepository.save(newRole);
-            }
-        });
-
-        Role roleAdmin = roleRepository.findByName("ROLE_ADMIN").get();
-
-        userTest1 = new User();
-        userTest1.setName("User Test 1");
-        userTest1.setPassword("pass1");
-        userTest1.setEmail("email1@email.com");
-        userTest1.setRoles(new HashSet<>());
-        userTest1.getRoles().add(roleAdmin);
-        userRepository.save(userTest1);
-
-        users.add(userTest1);
-
-
-        userTest2 = new User();
-        userTest2.setName("User Test 2");
-        userTest2.setPassword("pass2");
-        userTest2.setEmail("email2@email.com");
-        userTest2.setRoles(new HashSet<>());
-        userTest2.getRoles().add(roleAdmin);
-        userRepository.save(userTest2);
-
-        users.add(userTest2);
-
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(userTest1.getEmail(), userTest1.getPassword(), Collections.emptyList())
-        );
-        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
-
-
-        property1 = new Property();
-        property1.setName("Property1");
-        property1.setOwner(userTest1);
-        property1.setDescription("Property1 - description");
-        property1.setLocation("Porto Alegre");
-        property1 = propertyRepository.save(property1);
-
-
-        property2 = new Property();
-        property2.setOwner(userTest1);
-        property2.setName("Property2");
-        property2.setDescription("Property2 - description");
-        property2.setLocation("New York");
-        property2 = propertyRepository.save(property2);
-
-        propertyTestOverLappingDates = new Property();
-        propertyTestOverLappingDates.setOwner(userTest1);
-        propertyTestOverLappingDates.setName("Property2");
-        propertyTestOverLappingDates.setDescription("Property2 - description");
-        propertyTestOverLappingDates.setLocation("New York");
-        propertyTestOverLappingDates = propertyRepository.save(propertyTestOverLappingDates);
-
-    }
+public class BookingControllerTest extends BaseTest {
 
     @Test
     void createBooking_ShouldReturnOk_WhenRequestIsValid() throws Exception {
@@ -161,8 +44,8 @@ public class BookingControllerTest {
                 .andExpect(jsonPath("$.startDate").value(startDate.toString()))
                 .andExpect(jsonPath("$.endDate").value(endDate.toString()))
                 .andExpect(jsonPath("$.status").value(BookingStatus.CONFIRMED.toString()))
-                .andExpect(jsonPath("$.owner.name").value(users.get(0).getName()))
-                .andExpect(jsonPath("$.owner.email").value(users.get(0).getEmail()))
+                .andExpect(jsonPath("$.owner.name").value(propertyOwner.getName()))
+                .andExpect(jsonPath("$.owner.email").value(propertyOwner.getEmail()))
                 .andExpect(jsonPath("$.guests", hasSize(1)))
                 .andExpect(jsonPath("$.guests[0].name").value("Guest 1"))
                 .andExpect(jsonPath("$.guests[0].email").value("email1@gmail1.com"))
@@ -251,12 +134,12 @@ public class BookingControllerTest {
                 .andExpect(jsonPath("$.startDate").value(booking.getStartDate().toString()))
                 .andExpect(jsonPath("$.endDate").value(booking.getEndDate().toString()))
                 .andExpect(jsonPath("$.status").value("CANCELED"))
-                .andExpect(jsonPath("$.owner.name").value("User Test 1"))
-                .andExpect(jsonPath("$.owner.email").value("email1@email.com"))
+                .andExpect(jsonPath("$.owner.name").value(propertyOwner.getName()))
+                .andExpect(jsonPath("$.owner.email").value(propertyOwner.getEmail()))
                 .andExpect(jsonPath("$.property.id").value(booking.getProperty().getId().toString()))
-                .andExpect(jsonPath("$.property.name").value("Property1"))
-                .andExpect(jsonPath("$.property.location").value("Porto Alegre"))
-                .andExpect(jsonPath("$.property.description").value("Property1 - description"))
+                .andExpect(jsonPath("$.property.name").value(property1.getName()))
+                .andExpect(jsonPath("$.property.location").value(property1.getLocation()))
+                .andExpect(jsonPath("$.property.description").value(property1.getDescription()))
                 .andExpect(jsonPath("$.guests", hasSize(1)))
                 .andExpect(jsonPath("$.guests[0].name").value("Guest 1"))
                 .andExpect(jsonPath("$.guests[0].email").value("email@email.com"))
@@ -269,7 +152,7 @@ public class BookingControllerTest {
         Booking booking = createTestBooking();
 
         SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(userTest2.getEmail(), userTest2.getPassword(), Collections.emptyList())
+                new UsernamePasswordAuthenticationToken(otherUser.getEmail(), otherUser.getPassword(), Collections.emptyList())
         );
 
         mockMvc.perform(patch("/api/v1/bookings/" + booking.getId() + "/cancel")
@@ -325,7 +208,7 @@ public class BookingControllerTest {
         BookingDateUpdateDto dateUpdateDto = new BookingDateUpdateDto(newStartDate, newEndDate);
 
         SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(userTest2.getEmail(), userTest2.getPassword(), Collections.emptyList())
+                new UsernamePasswordAuthenticationToken(otherUser.getEmail(), otherUser.getPassword(), Collections.emptyList())
         );
 
         mockMvc.perform(patch("/api/v1/bookings/" + booking.getId() + "/dates")
@@ -385,7 +268,7 @@ public class BookingControllerTest {
                 .build();
 
         SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(userTest2.getEmail(), userTest2.getPassword(), Collections.emptyList())
+                new UsernamePasswordAuthenticationToken(otherUser.getEmail(), otherUser.getPassword(), Collections.emptyList())
         );
 
         mockMvc.perform(patch("/api/v1/bookings/" + booking1.getId() + "/guests")
@@ -443,7 +326,7 @@ public class BookingControllerTest {
 
 
         SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(userTest2.getEmail(), userTest2.getPassword(), Collections.emptyList())
+                new UsernamePasswordAuthenticationToken(otherUser.getEmail(), otherUser.getPassword(), Collections.emptyList())
         );
 
         mockMvc.perform(patch("/api/v1/bookings/" + booking1.getId() + "/rebook")
@@ -498,7 +381,7 @@ public class BookingControllerTest {
         bookingRepository.save(booking1);
 
         SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(userTest2.getEmail(), userTest2.getPassword(), Collections.emptyList())
+                new UsernamePasswordAuthenticationToken(otherUser.getEmail(), otherUser.getPassword(), Collections.emptyList())
         );
 
         mockMvc.perform(delete("/api/v1/bookings/" + booking1.getId())
@@ -584,16 +467,6 @@ public class BookingControllerTest {
     }
 
 
-    // Utility method to convert object to JSON string
-    public static String asJsonString(final Object obj) {
-        try {
-            ObjectMapper mapper = new ObjectMapper();
-            mapper.registerModule(new JavaTimeModule());
-            return mapper.writeValueAsString(obj);
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
 
 }
 

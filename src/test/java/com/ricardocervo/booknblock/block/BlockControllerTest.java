@@ -1,5 +1,6 @@
 package com.ricardocervo.booknblock.block;
 
+import com.ricardocervo.booknblock.BaseTest;
 import com.ricardocervo.booknblock.booking.*;
 import com.ricardocervo.booknblock.guest.GuestDto;
 import com.ricardocervo.booknblock.property.Property;
@@ -23,7 +24,6 @@ import org.springframework.web.context.WebApplicationContext;
 import java.time.LocalDate;
 import java.util.*;
 
-import static com.ricardocervo.booknblock.booking.BookingControllerTest.asJsonString;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -31,125 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc
-public class BlockControllerTest {
-
-    @Autowired
-    private MockMvc mockMvc;
-
-    @Autowired
-    private WebApplicationContext webApplicationContext;
-
-    @Autowired
-    private BookingService bookingService;
-
-    @Autowired
-    private BookingRepository bookingRepository;
-    @Autowired
-    private UserRepository userRepository;
-
-    @Autowired
-    private RoleRepository roleRepository;
-
-    @Autowired
-    private PropertyRepository propertyRepository;
-
-    @Autowired
-    private BlockRepository blockRepository;
-
-    @Autowired
-    private BlockService blockService;
-
-    private Property property1;
-
-    private Property property2;
-
-    private Property propertyTestOverLappingDates;
-
-    private User propertyOwner;
-    private User propertyManager;
-    private User otherUser;
-
-    @BeforeEach
-    public void setUp() {
-        blockRepository.deleteAll();
-        bookingRepository.deleteAll();
-        propertyRepository.deleteAll();
-        userRepository.deleteAll();
-
-
-        List<String> roles = Arrays.asList("ROLE_USER", "ROLE_ADMIN");
-
-        roles.forEach(roleName -> {
-            Optional<Role> existingRole = roleRepository.findByName(roleName);
-            if (existingRole.isEmpty()) {
-                Role newRole = new Role();
-                newRole.setName(roleName);
-                roleRepository.save(newRole);
-            }
-        });
-
-        Role roleAdmin = roleRepository.findByName("ROLE_ADMIN").get();
-
-        propertyOwner = new User();
-        propertyOwner.setName("Property Owner");
-        propertyOwner.setPassword("pass1");
-        propertyOwner.setEmail("owner@email.com");
-        propertyOwner.setRoles(new HashSet<>());
-        propertyOwner.getRoles().add(roleAdmin);
-        userRepository.save(propertyOwner);
-
-        propertyManager = new User();
-        propertyManager.setName("Property Manager");
-        propertyManager.setPassword("pass1");
-        propertyManager.setEmail("manager@email.com");
-        propertyManager.setRoles(new HashSet<>());
-        propertyManager.getRoles().add(roleAdmin);
-        userRepository.save(propertyManager);
-
-        otherUser = new User();
-        otherUser.setName("Other User");
-        otherUser.setPassword("pass1");
-        otherUser.setEmail("other_user@email.com");
-        otherUser.setRoles(new HashSet<>());
-        otherUser.getRoles().add(roleAdmin);
-        userRepository.save(otherUser);
-
-
-        SecurityContextHolder.getContext().setAuthentication(
-                new UsernamePasswordAuthenticationToken(propertyOwner.getEmail(), propertyOwner.getPassword(), Collections.emptyList())
-        );
-        mockMvc = MockMvcBuilders.webAppContextSetup(webApplicationContext).build();
-
-
-        property1 = new Property();
-        property1.setName("Property1");
-        property1.setOwner(propertyOwner);
-        property1.setDescription("Property1 - description");
-        property1.setLocation("Porto Alegre");
-        property1 = propertyRepository.save(property1);
-
-
-        property2 = new Property();
-        property2.setOwner(propertyOwner);
-        property2.setName("Property2");
-        property2.setDescription("Property2 - description");
-        property2.setLocation("New York");
-        property2 = propertyRepository.save(property2);
-
-        propertyTestOverLappingDates = new Property();
-        propertyTestOverLappingDates.setOwner(propertyOwner);
-        propertyTestOverLappingDates.setName("Property2");
-        propertyTestOverLappingDates.setDescription("Property2 - description");
-        propertyTestOverLappingDates.setLocation("New York");
-        propertyTestOverLappingDates = propertyRepository.save(propertyTestOverLappingDates);
-
-        property1.setManagers(new HashSet<>(List.of(propertyManager)));
-        propertyRepository.save(property1);
-
-        property2.setManagers(new HashSet<>(List.of(propertyManager)));
-        propertyRepository.save(property2);
-
-    }
+public class BlockControllerTest extends BaseTest {
 
     @Test
     void createBlock_ShouldReturnOk_WhenUserIsPropertyOwnerAndRequestIsValid() throws Exception {
