@@ -1,7 +1,6 @@
 package com.ricardocervo.booknblock.booking;
 
 import com.ricardocervo.booknblock.block.Block;
-import com.ricardocervo.booknblock.block.BlockRepository;
 import com.ricardocervo.booknblock.block.BlockService;
 import com.ricardocervo.booknblock.exceptions.BadRequestException;
 import com.ricardocervo.booknblock.exceptions.ConflictException;
@@ -10,19 +9,19 @@ import com.ricardocervo.booknblock.guest.Guest;
 import com.ricardocervo.booknblock.guest.GuestDto;
 import com.ricardocervo.booknblock.guest.GuestRepository;
 import com.ricardocervo.booknblock.property.Property;
+import com.ricardocervo.booknblock.property.PropertyDto;
 import com.ricardocervo.booknblock.property.PropertyService;
 import com.ricardocervo.booknblock.security.SecurityService;
 import com.ricardocervo.booknblock.user.User;
 import com.ricardocervo.booknblock.user.UserDto;
+import com.ricardocervo.booknblock.utils.DatesUtils;
 import lombok.RequiredArgsConstructor;
 import org.modelmapper.ModelMapper;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -70,12 +69,12 @@ public class BookingServiceImpl implements BookingService {
 
 
     private void validateBookingRequest(BookingRequestDto bookingRequest) {
-        if (!bookingRequest.getIncludeLoggedUserAsGuest() && (bookingRequest.getGuests() == null || bookingRequest.getGuests().isEmpty())) {
-            throw new BadRequestException("If logged user is not a guest, you must provide at least one guest.");
-        }
-
         if (bookingRequest.getStartDate().isAfter(bookingRequest.getEndDate())) {
             throw new BadRequestException("End date must be greater or equal to start date");
+        }
+
+        if (bookingRequest.getStartDate().isBefore(LocalDate.now())) {
+            throw new BadRequestException("Start date must be greater or equal to today");
         }
 
     }
@@ -84,7 +83,11 @@ public class BookingServiceImpl implements BookingService {
         BookingResponseDto response = new BookingResponseDto();
         response.setId(newBooking.getId().toString());
         response.setGuests(newBooking.getGuests().stream().map(guest -> modelMapper.map(guest, GuestDto.class)).collect(Collectors.toList()));
-        response.setPropertyId(newBooking.getProperty().getId().toString());
+        response.setProperty(new PropertyDto(
+                newBooking.getProperty().getId(),
+                newBooking.getProperty().getName(),
+                newBooking.getProperty().getLocation(),
+                newBooking.getProperty().getDescription()));
         response.setEndDate(newBooking.getEndDate());
         response.setStartDate(newBooking.getStartDate());
         response.setStatus(newBooking.getStatus());
@@ -94,20 +97,27 @@ public class BookingServiceImpl implements BookingService {
 
 
     private List<Guest> buildGuestList(BookingRequestDto bookingRequest, User owner, Booking booking) {
-        List<Guest> guests = new ArrayList<>();
-        if (bookingRequest.getIncludeLoggedUserAsGuest()) {
-            guests.add(new Guest(UUID.randomUUID(), owner.getName(), owner.getEmail(), booking));
-        }
+        validateGuests(bookingRequest.getGuests());
 
-        if (bookingRequest.getGuests() != null) {
-            for (GuestDto guestDto : bookingRequest.getGuests()) {
-                Guest guest = modelMapper.map(guestDto, Guest.class);
-                guest.setBooking(booking);
-                guests.add(guest);
-            }
+        List<Guest> guests = new ArrayList<>();
+
+        for (GuestDto guestDto : bookingRequest.getGuests()) {
+            Guest guest = modelMapper.map(guestDto, Guest.class);
+            guest.setBooking(booking);
+            guests.add(guest);
         }
 
         return guests;
+    }
+
+    private void validateGuests(List<GuestDto> guests) {
+        Set<String> emailSet = new HashSet<>();
+
+        for (GuestDto guest : guests) {
+            if (!emailSet.add(guest.getEmail())) {
+                throw new BadRequestException("Duplicate email found: " + guest.getEmail());
+            }
+        }
     }
 
     private Booking validateAndSaveBooking(Booking booking) {
@@ -127,26 +137,29 @@ public class BookingServiceImpl implements BookingService {
                 booking.getProperty(), BookingStatus.CANCELED);
 
         return existingBookings.stream().anyMatch(existingBooking ->
-                !existingBooking.equals(booking) &&
-                        !booking.getStartDate().isAfter(existingBooking.getEndDate()) &&
-                        !existingBooking.getStartDate().isBefore(booking.getEndDate())
-        );
 
+                !existingBooking.equals(booking)
+                        && DatesUtils.isOverlappingDates(
+                        booking.getStartDate(),
+                        booking.getEndDate(),
+                        existingBooking.getStartDate(),
+                        existingBooking.getEndDate()));
     }
 
     private boolean isOverlappingWithBlock(Booking booking) {
         List<Block> blocks = blockService.findByProperty(booking.getProperty());
 
         return blocks.stream().anyMatch(block ->
-                booking.getStartDate().isBefore(block.getEndDate()) &&
-                        block.getStartDate().isBefore(booking.getEndDate())
+                !booking.getStartDate().isAfter(block.getEndDate()) &&
+                        !block.getStartDate().isBefore(booking.getEndDate())
         );
     }
+
 
     @Override
     @Transactional
     public BookingResponseDto cancelBooking(UUID bookingId) {
-        securityService.authorize(bookingId);
+        securityService.authorizeBookingUpdate(bookingId);
 
         Booking booking = getBookingOrThrowException(bookingId);
 
@@ -164,7 +177,7 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public BookingResponseDto updateBookingDates(UUID bookingId, BookingDateUpdateDto dateUpdateDto) {
-        securityService.authorize(bookingId);
+        securityService.authorizeBookingUpdate(bookingId);
 
         Booking booking = getBookingOrThrowException(bookingId);
 
@@ -187,7 +200,7 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public BookingResponseDto updateBookingGuests(UUID bookingId, BookingGuestUpdateDto guestUpdateDto) {
-        securityService.authorize(bookingId);
+        securityService.authorizeBookingUpdate(bookingId);
 
         Booking booking = getBookingOrThrowException(bookingId);
 
@@ -207,7 +220,7 @@ public class BookingServiceImpl implements BookingService {
     @Override
     @Transactional
     public BookingResponseDto rebookCancelledBooking(UUID bookingId) {
-        securityService.authorize(bookingId);
+        securityService.authorizeBookingUpdate(bookingId);
         Booking booking = getBookingOrThrowException(bookingId);
 
         if (booking.getStatus() != BookingStatus.CANCELED) {
@@ -225,7 +238,7 @@ public class BookingServiceImpl implements BookingService {
     }
 
     public void deleteBooking(UUID bookingId) {
-        securityService.authorize(bookingId);
+        securityService.authorizeBookingUpdate(bookingId);
         bookingRepository.delete(getBookingOrThrowException(bookingId));
     }
 

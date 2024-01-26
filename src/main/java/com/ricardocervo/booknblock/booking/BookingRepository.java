@@ -10,5 +10,6 @@ import java.util.UUID;
 public interface BookingRepository extends JpaRepository<Booking, UUID> {
     List<Booking> findByPropertyAndStatusNot(Property property, BookingStatus status);
 
+    List<Booking> findByProperty(Property property);
 }
 

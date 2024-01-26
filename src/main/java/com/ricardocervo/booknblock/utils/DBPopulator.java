@@ -1,6 +1,7 @@
 package com.ricardocervo.booknblock.utils;
 
 import com.ricardocervo.booknblock.property.Property;
+import com.ricardocervo.booknblock.property.PropertyRepository;
 import com.ricardocervo.booknblock.property.PropertyService;
 import com.ricardocervo.booknblock.role.Role;
 import com.ricardocervo.booknblock.role.RoleRepository;
@@ -21,12 +22,13 @@ public class DBPopulator implements CommandLineRunner {
 
     private final RoleRepository roleRepository;
     private final UserService userService;
-    private final PropertyService propertyService;
-
+    private final PropertyRepository propertyRepository;
 
     @Override
     public void run(String... args) throws Exception {
         List<String> roles = Arrays.asList("ROLE_USER", "ROLE_ADMIN");
+
+
 
         roles.forEach(roleName -> {
             Optional<Role> existingRole = roleRepository.findByName(roleName);
@@ -38,18 +40,31 @@ public class DBPopulator implements CommandLineRunner {
         });
 
         Role roleAdmin = roleRepository.findByName("ROLE_ADMIN").get();
+        Role roleUser = roleRepository.findByName("ROLE_USER").get();
 
         User manager1 = new User();
-        manager1.setName("Ricardo Cervo");
+        manager1.setName("Manager1");
         manager1.setPassword("pass123");
-        manager1.setEmail("ricardo.a.cervo@gmail.com");
+        manager1.setEmail("manager1@gmail.com");
         manager1.setRoles(new HashSet<>());
         manager1.getRoles().add(roleAdmin);
         userService.createUser(manager1);
 
+        User manager2 = new User();
+        manager2.setName("Manager2");
+        manager2.setPassword("pass123");
+        manager2.setEmail("manager2@gmail.com");
+        manager2.setRoles(new HashSet<>());
+        manager2.getRoles().add(roleAdmin);
+        userService.createUser(manager2);
 
-
-        Role roleUser = roleRepository.findByName("ROLE_USER").get();
+        User ricardo = new User();
+        ricardo.setName("Ricardo Cervo");
+        ricardo.setPassword("pass123");
+        ricardo.setEmail("ricardo.a.cervo@gmail.com");
+        ricardo.setRoles(new HashSet<>());
+        ricardo.getRoles().add(roleAdmin);
+        userService.createUser(ricardo);
 
         User user1 = new User();
         user1.setName("Alexa Richmond");
@@ -75,19 +90,24 @@ public class DBPopulator implements CommandLineRunner {
         user3.getRoles().add(roleUser);
         userService.createUser(user3);
 
-        Property property = new Property();
-        property.setName("A property");
-        property.setOwner(user1);
-        property.setDescription("A property - description");
-        property.setLocation("Porto Alegre");
-        propertyService.createProperty(property);
+        Property property1 = new Property();
+        property1.setName("A property");
+        property1.setOwner(user1);
+        property1.setDescription("A property - description");
+        property1.setLocation("Porto Alegre");
+        propertyRepository.save(property1);
 
-        property = new Property();
-        property.setOwner(user2);
-        property.setName("Another property");
-        property.setDescription("Another property - description");
-        property.setLocation("New York");
-        propertyService.createProperty(property);
+        Property property2 = new Property();
+        property2.setOwner(user2);
+        property2.setName("Another property");
+        property2.setDescription("Another property - description");
+        property2.setLocation("New York");
+        propertyRepository.save(property2);
 
+        property1.setManagers(new HashSet<>(List.of(manager1)));
+        propertyRepository.save(property1);
+
+        property2.setManagers(new HashSet<>(List.of(manager2)));
+        propertyRepository.save(property2);
     }
 }

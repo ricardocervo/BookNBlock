@@ -2,6 +2,7 @@ package com.ricardocervo.booknblock.booking;
 
 import com.ricardocervo.booknblock.guest.Guest;
 import com.ricardocervo.booknblock.guest.GuestDto;
+import com.ricardocervo.booknblock.property.PropertyDto;
 import com.ricardocervo.booknblock.user.UserDto;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
@@ -20,9 +21,6 @@ public class BookingResponseDto {
     @UUID
     private String id;
 
-    @UUID
-    private String propertyId;
-
     @NotNull
     private LocalDate startDate;
 
@@ -32,6 +30,8 @@ public class BookingResponseDto {
     private BookingStatus status;
 
     private UserDto owner;
+
+    private PropertyDto property;
 
     private List<GuestDto> guests;
 }

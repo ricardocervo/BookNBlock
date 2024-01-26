@@ -1,14 +1,21 @@
 package com.ricardocervo.booknblock.block;
 
 import com.ricardocervo.booknblock.property.Property;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 public interface BlockService {
 
-    public Block createBlock(Block block);
+    @Transactional
+    BlockResponseDto createBlock(BlockRequestDto blockRequest);
 
-    public Block updateBlock(Long id, Block block) ;
+    Block getBlockOrThrowException(UUID blockId);
 
     List<Block> findByProperty(Property property);
+
+    BlockResponseDto updateBlock(UUID blockId, BlockUpdateDto blockUpdateDto);
+
+    void deleteBlock(UUID blockId);
 }

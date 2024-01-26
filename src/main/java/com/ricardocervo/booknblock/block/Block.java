@@ -18,6 +18,7 @@ import java.util.UUID;
 @NoArgsConstructor
 @Entity
 public class Block {
+
     @EqualsAndHashCode.Include
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
@@ -26,10 +27,6 @@ public class Block {
     @ManyToOne
     @JoinColumn(name = "property_id")
     private Property property;
-
-    @ManyToOne
-    @JoinColumn(name = "owner_id")
-    private User owner;
 
     private LocalDate startDate;
     private LocalDate endDate;
