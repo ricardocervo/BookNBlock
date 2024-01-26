@@ -86,3 +86,63 @@ The Booking API provides a set of endpoints for managing bookings, including cre
 ## Notes
 - `BookingRequestDto`, `BookingResponseDto`, `BookingDateUpdateDto`, and `BookingGuestUpdateDto` are data transfer objects (DTOs) used in requests and responses. Their structures depend on the application's business logic.
 - Clients should handle potential errors and status codes as per the API's response.
+
+
+# Block API Endpoints
+
+## Base URL
+`/api/v1/blocks`
+
+## Endpoints
+
+### 1. Create a Block
+Creates a new block.
+
+- **URL**: `/api/v1/blocks`
+- **Method**: `POST`
+- **Request Body**: 
+  - `BlockRequestDto` object which includes:
+    - `propertyId`: UUID of the property.
+    - `startDate`: Start date of the block (format: `yyyy-mm-dd`).
+    - `endDate`: End date of the block (format: `yyyy-mm-dd`).
+    - `reason`: Reason for the block.
+- **Success Response**:
+  - **Code**: `201 CREATED`
+  - **Content**: `BlockResponseDto` object with block details.
+- **Error Response**:
+  - **Code**: `400 BAD REQUEST` if the request data is invalid.
+  - **Code**: `404 NOT FOUND` if the property is not found.
+  - **Code**: `409 CONFLICT` if the block dates overlap with existing blocks or bookings.
+
+### 2. Update a Block
+Updates an existing block.
+
+- **URL**: `/api/v1/blocks/{blockId}`
+- **Method**: `PUT`
+- **URL Parameters**: 
+  - `blockId` [UUID] - The ID of the block to update.
+- **Request Body**: 
+  - `BlockUpdateDto` object which includes:
+    - `startDate`: New start date of the block (format: `yyyy-mm-dd`).
+    - `endDate`: New end date of the block (format: `yyyy-mm-dd`).
+    - `reason`: New reason for the block.
+- **Success Response**:
+  - **Code**: `200 OK`
+  - **Content**: `BlockResponseDto` object with updated block details.
+- **Error Response**:
+  - **Code**: `400 BAD REQUEST` if the request data is invalid.
+  - **Code**: `404 NOT FOUND` if the block is not found.
+  - **Code**: `409 CONFLICT` if the updated block dates overlap with existing blocks or bookings.
+
+### 3. Delete a Block
+Deletes an existing block.
+
+- **URL**: `/api/v1/blocks/{blockId}`
+- **Method**: `DELETE`
+- **URL Parameters**: 
+  - `blockId` [UUID] - The ID of the block to delete.
+- **Success Response**:
+  - **Code**: `204 NO CONTENT`
+- **Error Response**:
+  - **Code**: `404 NOT FOUND` if the block is not found.
+
