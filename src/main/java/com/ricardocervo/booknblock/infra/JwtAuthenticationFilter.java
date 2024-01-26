@@ -1,4 +1,4 @@
-package com.ricardocervo.booknblock.security;
+package com.ricardocervo.booknblock.infra;
 
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;

@@ -7,7 +7,7 @@ import com.ricardocervo.booknblock.exceptions.ConflictException;
 import com.ricardocervo.booknblock.exceptions.ResourceNotFoundException;
 import com.ricardocervo.booknblock.property.Property;
 import com.ricardocervo.booknblock.property.PropertyService;
-import com.ricardocervo.booknblock.security.SecurityService;
+import com.ricardocervo.booknblock.infra.SecurityService;
 import com.ricardocervo.booknblock.utils.DatesUtils;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

@@ -1,7 +1,5 @@
-package com.ricardocervo.booknblock.security;
+package com.ricardocervo.booknblock.infra;
 
-import com.ricardocervo.booknblock.block.Block;
-import com.ricardocervo.booknblock.block.BlockRepository;
 import com.ricardocervo.booknblock.booking.Booking;
 import com.ricardocervo.booknblock.booking.BookingRepository;
 import com.ricardocervo.booknblock.exceptions.ResourceNotFoundException;
@@ -47,10 +45,6 @@ public class SecurityService {
         }
     }
 
-    public void authorizeBlock(UUID propertyId) {
-        Property property = propertyRepository.findById(propertyId).orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
-        authorizeBlock(property);
-    }
     public  void authorizeBlock(Property property) {
         if (!getLoggedUser().equals(property.getOwner())) {
             if (!property.getManagers().contains(getLoggedUser())) {

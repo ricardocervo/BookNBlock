@@ -1,4 +1,4 @@
-package com.ricardocervo.booknblock.security;
+package com.ricardocervo.booknblock.infra;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;

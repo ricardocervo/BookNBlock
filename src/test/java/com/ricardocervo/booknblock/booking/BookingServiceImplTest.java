@@ -9,7 +9,7 @@ import com.ricardocervo.booknblock.guest.GuestRepository;
 import com.ricardocervo.booknblock.property.Property;
 import com.ricardocervo.booknblock.property.PropertyService;
 import com.ricardocervo.booknblock.role.Role;
-import com.ricardocervo.booknblock.security.SecurityService;
+import com.ricardocervo.booknblock.infra.SecurityService;
 import com.ricardocervo.booknblock.user.User;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
