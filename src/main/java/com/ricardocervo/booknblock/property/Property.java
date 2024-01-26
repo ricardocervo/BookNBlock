@@ -1,6 +1,7 @@
 package com.ricardocervo.booknblock.property;
 
 
+import com.ricardocervo.booknblock.infra.BaseEntity;
 import com.ricardocervo.booknblock.user.User;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotNull;
@@ -10,14 +11,14 @@ import lombok.*;
 import java.util.Set;
 import java.util.UUID;
 
-@Data
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-public class Property {
+@Table(name = "properties")
+public class Property extends BaseEntity {
 
-    @EqualsAndHashCode.Include
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;

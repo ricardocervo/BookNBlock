@@ -1,4 +1,5 @@
 package com.ricardocervo.booknblock.booking;
+
 import com.ricardocervo.booknblock.guest.Guest;
 import com.ricardocervo.booknblock.property.Property;
 import com.ricardocervo.booknblock.user.User;
@@ -11,14 +12,14 @@ import java.util.List;
 import java.util.UUID;
 
 
-@Data
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@Getter
+@Setter
+@ToString
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
 public class Booking {
 
-    @EqualsAndHashCode.Include
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
