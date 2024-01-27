@@ -2,6 +2,7 @@ package com.ricardocervo.booknblock.exceptions;
 
 import com.ricardocervo.booknblock.infra.SecurityService;
 import com.ricardocervo.booknblock.user.User;
+import io.jsonwebtoken.ExpiredJwtException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -51,14 +52,19 @@ public class GlobalExceptionHandler {
         return buildResponseEntity(HttpStatus.BAD_REQUEST, ex.getMessage(), null);
     }
 
-    @ExceptionHandler(UnauthorizedException.class)
-    public ResponseEntity<ErrorDetails> handleUnauthorizedException(UnauthorizedException ex) {
-        return buildResponseEntity(HttpStatus.UNAUTHORIZED, ex.getMessage(), null);
+    @ExceptionHandler(ForbiddenException.class)
+    public ResponseEntity<ErrorDetails> handleForbiddenException(ForbiddenException ex) {
+        return buildResponseEntity(HttpStatus.FORBIDDEN, ex.getMessage(), null);
     }
 
     @ExceptionHandler(BadCredentialsException.class)
     public ResponseEntity<ErrorDetails> handleBadCredentialsException(BadCredentialsException ex) {
-        return buildResponseEntity(HttpStatus.FORBIDDEN, ex.getMessage(), null);
+        return buildResponseEntity(HttpStatus.UNAUTHORIZED, ex.getMessage(), null);
+    }
+
+    @ExceptionHandler(ExpiredJwtException.class)
+    public ResponseEntity<ErrorDetails> handleExpiredJwtException(ExpiredJwtException ex) {
+        return buildResponseEntity(HttpStatus.UNAUTHORIZED, ex.getMessage(), null);
     }
 
     private ResponseEntity<ErrorDetails> buildResponseEntity(HttpStatus status, String message, List<String> details) {

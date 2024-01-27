@@ -82,7 +82,7 @@ public class BlockControllerTest extends BaseTest {
     }
 
     @Test
-    void createBlock_ShouldReturnUnauthorized_WhenUserNotPropertyOwnerOrManager() throws Exception {
+    void createBlock_ShouldReturnForbidden_WhenUserNotPropertyOwnerOrManager() throws Exception {
         LocalDate blockStartDate = LocalDate.now().plusDays(3);
         LocalDate blockEndDate = LocalDate.now().plusDays(5);
 
@@ -99,7 +99,7 @@ public class BlockControllerTest extends BaseTest {
         mockMvc.perform(post("/api/v1/blocks")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(asJsonString(blockRequestDto)))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
     }
 
 
@@ -192,7 +192,7 @@ public class BlockControllerTest extends BaseTest {
     }
 
     @Test
-    void updateBlock_ShouldReturnUnauthorized_WhenUserIsNotPropertyOwnerOrManager() throws Exception {
+    void updateBlock_ShouldReturnForbidden_WhenUserIsNotPropertyOwnerOrManager() throws Exception {
         Block block = createTestBlock(property1);
 
         LocalDate updatedStartDate = LocalDate.now().plusDays(4);
@@ -209,7 +209,7 @@ public class BlockControllerTest extends BaseTest {
         mockMvc.perform(put("/api/v1/blocks/" + block.getId())
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(blockUpdateJson))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -289,7 +289,7 @@ public class BlockControllerTest extends BaseTest {
     }
 
     @Test
-    void deleteBlock_ShouldReturnUnauthorized_WhenUserNotPropertyOwnerOrManager() throws Exception {
+    void deleteBlock_ShouldReturnForbidden_WhenUserNotPropertyOwnerOrManager() throws Exception {
         Block block = createTestBlock(property1);
 
 
@@ -298,7 +298,7 @@ public class BlockControllerTest extends BaseTest {
         );
 
         mockMvc.perform(delete("/api/v1/blocks/" + block.getId()))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
     }
 
 

@@ -3,7 +3,7 @@ package com.ricardocervo.booknblock.infra;
 import com.ricardocervo.booknblock.booking.Booking;
 import com.ricardocervo.booknblock.booking.BookingRepository;
 import com.ricardocervo.booknblock.exceptions.ResourceNotFoundException;
-import com.ricardocervo.booknblock.exceptions.UnauthorizedException;
+import com.ricardocervo.booknblock.exceptions.ForbiddenException;
 import com.ricardocervo.booknblock.property.Property;
 import com.ricardocervo.booknblock.user.User;
 import com.ricardocervo.booknblock.user.UserRepository;
@@ -40,7 +40,7 @@ public class SecurityService {
     public  void authorizeBookingUpdate(Booking booking) {
         if (!getLoggedUser().equals(booking.getOwner())) {
             log.warn("Unauthorized attempt to access a block. User: " + getLoggedUser().getEmail());
-            throwGenericUnauthorizedException();
+            throwNewForbiddenException();
         }
     }
 
@@ -48,12 +48,12 @@ public class SecurityService {
         if (!getLoggedUser().equals(property.getOwner())) {
             if (!property.getManagers().contains(getLoggedUser())) {
                 log.warn("Unauthorized attempt to access a block. User: " + getLoggedUser().getEmail());
-                throwGenericUnauthorizedException();
+                throwNewForbiddenException();
             }
         }
     }
 
-    private static void throwGenericUnauthorizedException() {
-        throw new UnauthorizedException("You are not allowed to access this resource");
+    private static void throwNewForbiddenException() {
+        throw new ForbiddenException("You are not allowed to access this resource");
     }
 }

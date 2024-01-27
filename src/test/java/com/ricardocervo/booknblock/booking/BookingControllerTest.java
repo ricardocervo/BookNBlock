@@ -39,7 +39,7 @@ public class BookingControllerTest extends BaseTest {
         MvcResult mvcResult = mockMvc.perform(post("/api/v1/bookings")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(asJsonString(bookingRequestDto)))
-                .andExpect(status().isOk())
+                .andExpect(status().isCreated())
                 .andExpect(jsonPath("$.id").exists())
                 .andExpect(jsonPath("$.startDate").value(startDate.toString()))
                 .andExpect(jsonPath("$.endDate").value(endDate.toString()))
@@ -148,7 +148,7 @@ public class BookingControllerTest extends BaseTest {
     }
 
     @Test
-    void cancelBooking_ShouldReturnUnauthorized_WhenUserIsNotBookingOwner() throws Exception {
+    void cancelBooking_ShouldReturnForbidden_WhenUserIsNotBookingOwner() throws Exception {
         Booking booking = createTestBooking();
 
         SecurityContextHolder.getContext().setAuthentication(
@@ -157,7 +157,7 @@ public class BookingControllerTest extends BaseTest {
 
         mockMvc.perform(patch("/api/v1/bookings/" + booking.getId() + "/cancel")
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
 
     }
 
@@ -201,7 +201,7 @@ public class BookingControllerTest extends BaseTest {
     }
 
     @Test
-    void updateBookingDates_ShouldReturnUnauthorized_WhenUserIsNotBookingOwner() throws Exception {
+    void updateBookingDates_ShouldReturnForbidden_WhenUserIsNotBookingOwner() throws Exception {
         Booking booking = createTestBooking();
         LocalDate newStartDate = booking.getStartDate().plusDays(2);
         LocalDate newEndDate = booking.getEndDate().plusDays(3);
@@ -214,7 +214,7 @@ public class BookingControllerTest extends BaseTest {
         mockMvc.perform(patch("/api/v1/bookings/" + booking.getId() + "/dates")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(asJsonString(dateUpdateDto)))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
 
     }
 
@@ -259,7 +259,7 @@ public class BookingControllerTest extends BaseTest {
     }
 
     @Test
-    void updateBookingGuests_ShouldReturnUnauthorized_WhenUserIsNotBookingOwner() throws Exception {
+    void updateBookingGuests_ShouldReturnForbidden_WhenUserIsNotBookingOwner() throws Exception {
         Booking booking1 = createTestBooking(LocalDate.now().plusDays(3), LocalDate.now().plusDays(5));
         bookingRepository.save(booking1);
 
@@ -274,7 +274,7 @@ public class BookingControllerTest extends BaseTest {
         mockMvc.perform(patch("/api/v1/bookings/" + booking1.getId() + "/guests")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(asJsonString(guestUpdateDto)))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
 
     }
 
@@ -319,7 +319,7 @@ public class BookingControllerTest extends BaseTest {
     }
 
     @Test
-    void rebook_ShouldReturnUnauthorized_WhenUserIsNotBookingOwner() throws Exception {
+    void rebook_ShouldReturnForbidden_WhenUserIsNotBookingOwner() throws Exception {
         Booking booking1 = createTestBooking(LocalDate.now().plusDays(3), LocalDate.now().plusDays(5));
         booking1.setStatus(BookingStatus.CANCELED);
         bookingRepository.save(booking1);
@@ -331,7 +331,7 @@ public class BookingControllerTest extends BaseTest {
 
         mockMvc.perform(patch("/api/v1/bookings/" + booking1.getId() + "/rebook")
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
 
 
     }
@@ -376,7 +376,7 @@ public class BookingControllerTest extends BaseTest {
 
 
     @Test
-    void delete_ShouldReturnUnauthorized_WhenUserIsNotBookingOwner() throws Exception {
+    void delete_ShouldReturnForbidden_WhenUserIsNotBookingOwner() throws Exception {
         Booking booking1 = createTestBooking(LocalDate.now().plusDays(3), LocalDate.now().plusDays(5));
         bookingRepository.save(booking1);
 
@@ -386,7 +386,7 @@ public class BookingControllerTest extends BaseTest {
 
         mockMvc.perform(delete("/api/v1/bookings/" + booking1.getId())
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isUnauthorized());
+                .andExpect(status().isForbidden());
 
     }
 

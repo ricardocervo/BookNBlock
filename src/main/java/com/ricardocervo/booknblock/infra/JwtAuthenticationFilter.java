@@ -8,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.http.HttpStatus;
 import org.springframework.lang.NonNull;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.context.SecurityContextHolder;
@@ -19,11 +20,15 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
 import java.text.SimpleDateFormat;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static org.springframework.http.HttpStatus.FORBIDDEN;
+import static org.springframework.http.HttpStatus.UNAUTHORIZED;
 import static org.springframework.util.MimeTypeUtils.APPLICATION_JSON_VALUE;
 
 @Component
@@ -42,36 +47,33 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
             @NonNull HttpServletResponse response,
             @NonNull FilterChain filterChain) throws ServletException, IOException {
         final String authHeader = request.getHeader("Authorization");
-        final String jwt;
-        final String userEmail;
 
-        if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+        String uri = request.getRequestURI();
+        if (!request.getRequestURI().endsWith("/authenticate") && !request.getRequestURI().startsWith("/h2-console/")) {
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                handleErrorResponse(response, "Not logged in: authorization header with authorization token is missing");
+                return;
+            }
+        } else {
             filterChain.doFilter(request, response);
             return;
         }
-        jwt = authHeader.substring(7);
+
+
+
+        final String jwt = authHeader.substring(7);
+        final String userEmail;
+
         try {
             userEmail = jwtService.extractUserName(jwt);
         } catch (ExpiredJwtException e) {
-            log.error("Error logging in : {} ", e.getMessage());
-            String errorMsg = "Not logged in - invalid token";
-            response.setHeader("error", errorMsg);
-            response.setStatus(FORBIDDEN.value());
-            Map<String,String > error = new HashMap<>();
-            error.put("httpStatus", String.valueOf(FORBIDDEN.value()));
-            error.put("httpError", "Forbidden");
-            error.put("timeStamp", new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
-            error.put("message", errorMsg);
-            response.setContentType(APPLICATION_JSON_VALUE);
-            new ObjectMapper().writeValue(response.getOutputStream(),error);
+            handleErrorResponse(response, "Not logged in: " + e.getMessage());
+            return;
+        } catch (Exception e) {
+            handleErrorResponse(response, e.getMessage());
             return;
         }
-/*
-    private int httpStatus;
-    private String httpError;
-    private LocalDateTime timestamp;
-    private String message;
- */
+
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
             UserDetails userDetails = this.userDetailsService.loadUserByUsername(userEmail);
             if (jwtService.isTokenValid(jwt, userDetails)) {
@@ -84,4 +86,23 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         filterChain.doFilter(request, response);
     }
 
+    private void handleErrorResponse(HttpServletResponse response, String errorMsg) throws IOException {
+        int httpStatus = UNAUTHORIZED.value();
+        String httpError = HttpStatus.UNAUTHORIZED.getReasonPhrase();
+        log.error("Error logging in: {}", errorMsg);
+        response.setHeader("error", errorMsg);
+        response.setStatus(httpStatus);
+
+        Map<String, String> error = new LinkedHashMap<>();
+        error.put("httpStatus", String.valueOf(httpStatus));
+        error.put("httpError", httpError);
+
+        String formattedDateTime = LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSSSSS"));
+
+        error.put("timestamp", formattedDateTime);
+        error.put("message", errorMsg);
+
+        response.setContentType(APPLICATION_JSON_VALUE);
+        new ObjectMapper().writeValue(response.getOutputStream(), error);
+    }
 }
