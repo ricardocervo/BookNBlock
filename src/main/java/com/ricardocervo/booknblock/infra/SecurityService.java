@@ -5,7 +5,6 @@ import com.ricardocervo.booknblock.booking.BookingRepository;
 import com.ricardocervo.booknblock.exceptions.ResourceNotFoundException;
 import com.ricardocervo.booknblock.exceptions.UnauthorizedException;
 import com.ricardocervo.booknblock.property.Property;
-import com.ricardocervo.booknblock.property.PropertyRepository;
 import com.ricardocervo.booknblock.user.User;
 import com.ricardocervo.booknblock.user.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -25,16 +24,13 @@ public class SecurityService {
 
     private final BookingRepository bookingRepository;
 
-    private final PropertyRepository propertyRepository;
-
     public User getLoggedUser() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         String email = authentication.getName();
         if (email == null) {
             return null;
         }
-
-        return userRepository.findByEmail(email).orElseThrow(() -> new RuntimeException("Logged user email not found in the database!"));
+        return userRepository.findByEmail(email).orElse(null);
     }
 
     public void authorizeBookingUpdate(UUID bookingId) {

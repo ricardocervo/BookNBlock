@@ -1,7 +1,11 @@
 package com.ricardocervo.booknblock.exceptions;
 
+import com.ricardocervo.booknblock.infra.SecurityService;
+import com.ricardocervo.booknblock.user.User;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.authentication.BadCredentialsException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -11,7 +15,10 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @ControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
+
+    private final SecurityService securityService;
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorDetails> handleValidationExceptions(MethodArgumentNotValidException ex) {
@@ -49,6 +56,11 @@ public class GlobalExceptionHandler {
         return buildResponseEntity(HttpStatus.UNAUTHORIZED, ex.getMessage(), null);
     }
 
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<ErrorDetails> handleBadCredentialsException(BadCredentialsException ex) {
+        return buildResponseEntity(HttpStatus.FORBIDDEN, ex.getMessage(), null);
+    }
+
     private ResponseEntity<ErrorDetails> buildResponseEntity(HttpStatus status, String message, List<String> details) {
         ErrorDetails errorDetails = new ErrorDetails();
         errorDetails.setHttpError(status.getReasonPhrase());
@@ -56,7 +68,10 @@ public class GlobalExceptionHandler {
         errorDetails.setTimestamp(LocalDateTime.now());
         errorDetails.setMessage(message);
         errorDetails.setDetails(details);
-
+        User loggedUser = securityService.getLoggedUser();
+        if (loggedUser != null) {
+            errorDetails.setLoggedUser(securityService.getLoggedUser().getEmail());
+        }
         return ResponseEntity.status(status).body(errorDetails);
     }
 }

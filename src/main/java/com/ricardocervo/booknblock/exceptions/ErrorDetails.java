@@ -16,8 +16,8 @@ public class ErrorDetails {
     private int httpStatus;
     private String httpError;
     private LocalDateTime timestamp;
+    private String loggedUser;
     private String message;
-
     private List<String> details;
 
 }
