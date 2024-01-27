@@ -1,11 +1,10 @@
 package com.ricardocervo.booknblock.auth;
 
 
-import com.ricardocervo.booknblock.security.JwtService;
+import com.ricardocervo.booknblock.infra.JwtService;
 import com.ricardocervo.booknblock.user.UserDto;
 import com.ricardocervo.booknblock.user.UserRepository;
 import lombok.RequiredArgsConstructor;
-import org.modelmapper.ModelMapper;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;

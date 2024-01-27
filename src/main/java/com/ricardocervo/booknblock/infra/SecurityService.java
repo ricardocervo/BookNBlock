@@ -1,7 +1,5 @@
-package com.ricardocervo.booknblock.security;
+package com.ricardocervo.booknblock.infra;
 
-import com.ricardocervo.booknblock.block.Block;
-import com.ricardocervo.booknblock.block.BlockRepository;
 import com.ricardocervo.booknblock.booking.Booking;
 import com.ricardocervo.booknblock.booking.BookingRepository;
 import com.ricardocervo.booknblock.exceptions.ResourceNotFoundException;
@@ -11,6 +9,7 @@ import com.ricardocervo.booknblock.property.PropertyRepository;
 import com.ricardocervo.booknblock.user.User;
 import com.ricardocervo.booknblock.user.UserRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
@@ -19,6 +18,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Log4j2
 public class SecurityService {
 
     private final UserRepository userRepository;
@@ -43,17 +43,15 @@ public class SecurityService {
     }
     public  void authorizeBookingUpdate(Booking booking) {
         if (!getLoggedUser().equals(booking.getOwner())) {
+            log.warn("Unauthorized attempt to access a block. User: " + getLoggedUser().getEmail());
             throwGenericUnauthorizedException();
         }
     }
 
-    public void authorizeBlock(UUID propertyId) {
-        Property property = propertyRepository.findById(propertyId).orElseThrow(() -> new ResourceNotFoundException("Booking not found"));
-        authorizeBlock(property);
-    }
     public  void authorizeBlock(Property property) {
         if (!getLoggedUser().equals(property.getOwner())) {
             if (!property.getManagers().contains(getLoggedUser())) {
+                log.warn("Unauthorized attempt to access a block. User: " + getLoggedUser().getEmail());
                 throwGenericUnauthorizedException();
             }
         }

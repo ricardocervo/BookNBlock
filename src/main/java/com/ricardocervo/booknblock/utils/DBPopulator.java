@@ -2,7 +2,6 @@ package com.ricardocervo.booknblock.utils;
 
 import com.ricardocervo.booknblock.property.Property;
 import com.ricardocervo.booknblock.property.PropertyRepository;
-import com.ricardocervo.booknblock.property.PropertyService;
 import com.ricardocervo.booknblock.role.Role;
 import com.ricardocervo.booknblock.role.RoleRepository;
 import com.ricardocervo.booknblock.user.User;
@@ -26,9 +25,12 @@ public class DBPopulator implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        List<String> roles = Arrays.asList("ROLE_USER", "ROLE_ADMIN");
 
-
+        //in this version we don't have other roles besides ROLE_USER
+        //but the implementation is ready to use other roles in the future
+        //we could have endpoints with @PreAuthorize("hasRole('ROLE_ADMIN')")
+        //to allow ADMIN users to perform actions like deleting users, properties, etc
+        List<String> roles = List.of("ROLE_USER");
 
         roles.forEach(roleName -> {
             Optional<Role> existingRole = roleRepository.findByName(roleName);
@@ -39,7 +41,6 @@ public class DBPopulator implements CommandLineRunner {
             }
         });
 
-        Role roleAdmin = roleRepository.findByName("ROLE_ADMIN").get();
         Role roleUser = roleRepository.findByName("ROLE_USER").get();
 
         User manager1 = new User();
@@ -47,7 +48,7 @@ public class DBPopulator implements CommandLineRunner {
         manager1.setPassword("pass123");
         manager1.setEmail("manager1@gmail.com");
         manager1.setRoles(new HashSet<>());
-        manager1.getRoles().add(roleAdmin);
+        manager1.getRoles().add(roleUser);
         userService.createUser(manager1);
 
         User manager2 = new User();
@@ -55,7 +56,7 @@ public class DBPopulator implements CommandLineRunner {
         manager2.setPassword("pass123");
         manager2.setEmail("manager2@gmail.com");
         manager2.setRoles(new HashSet<>());
-        manager2.getRoles().add(roleAdmin);
+        manager2.getRoles().add(roleUser);
         userService.createUser(manager2);
 
         User ricardo = new User();
@@ -63,7 +64,7 @@ public class DBPopulator implements CommandLineRunner {
         ricardo.setPassword("pass123");
         ricardo.setEmail("ricardo.a.cervo@gmail.com");
         ricardo.setRoles(new HashSet<>());
-        ricardo.getRoles().add(roleAdmin);
+        ricardo.getRoles().add(roleUser);
         userService.createUser(ricardo);
 
         User user1 = new User();

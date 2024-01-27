@@ -1,25 +1,25 @@
 package com.ricardocervo.booknblock.block;
 
 
+import com.ricardocervo.booknblock.infra.BaseEntity;
 import com.ricardocervo.booknblock.property.Property;
-import com.ricardocervo.booknblock.user.User;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDate;
 import java.util.UUID;
 
-@Data
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@Getter
+@Setter
 @AllArgsConstructor
 @NoArgsConstructor
 @Entity
-public class Block {
+@Table(name = "blocks")
+public class Block extends BaseEntity {
 
-    @EqualsAndHashCode.Include
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;

@@ -1,29 +1,31 @@
 package com.ricardocervo.booknblock.user;
 
+import com.ricardocervo.booknblock.infra.BaseEntity;
 import com.ricardocervo.booknblock.property.Property;
 import com.ricardocervo.booknblock.role.Role;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
+import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Set;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Entity
-@Table(name = "_user")
-@Data
+@Table(name = "users")
+@Getter
+@Setter
 @NoArgsConstructor
 @AllArgsConstructor
-public class User implements UserDetails {
+public class User extends BaseEntity implements UserDetails {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     private UUID id;
@@ -44,6 +46,8 @@ public class User implements UserDetails {
             joinColumns = @JoinColumn(name = "user_id"),
             inverseJoinColumns = @JoinColumn(name = "role_id")
     )
+
+    //We are not using Roles in this version, but the implementation is ready for future versions
     private Set<Role> roles;
 
     @Override
@@ -81,5 +85,6 @@ public class User implements UserDetails {
 
     @ManyToMany(mappedBy = "managers")
     private Set<Property> managedProperties;
+
 }
 

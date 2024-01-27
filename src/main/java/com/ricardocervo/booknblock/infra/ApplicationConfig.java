@@ -1,4 +1,4 @@
-package com.ricardocervo.booknblock.security;
+package com.ricardocervo.booknblock.infra;
 
 import com.ricardocervo.booknblock.user.UserRepository;
 import lombok.RequiredArgsConstructor;
