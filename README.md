@@ -1,4 +1,8 @@
-# Assumptions for Booking and Block Management
+# BookNBlock: A Java-Based RESTful Webservice for Property Booking and Management
+
+Below is the documentation of my solution for the proposed test.
+
+## My Assumptions for Booking and Block Management
 
 1. **Manager and Owner Interchangeability**:
    - A manager can change a block that the owner created and vice versa.
@@ -34,7 +38,7 @@ Ensure you have **Java 17** and **Apache Maven** installed on your system. Verif
 
 In this section, we will see some examples of how to interact with the API to create Bookings and Blocks. A complete documentation of the API can be found further ahead in this document.
 
-After starting the application, we can use applications like Postman to send requests and interact with the API. The first request to be made is for authentication:
+After starting the application, we can use tools like Postman to send requests and interact with the API. The first request to be sent is for authentication:
 
 ```
 POST http://localhost:8080/api/v1/auth/authenticate
