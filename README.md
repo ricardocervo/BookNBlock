@@ -6,21 +6,24 @@ Below is the documentation of my solution for the proposed test.
 
 1. **Manager and Owner Interchangeability**:
    - A manager can change a block that the owner created and vice versa.
+     
+2. **Roles of Property Managers and Guestss**
+  - A Manager of one property can be the Guest of another property and vice versa.
 
-2. **Multiple Guests in a Booking**:
+3. **Multiple Guests in a Booking**:
    - A booking can include more than one guest.
 
-3. **Booking Ownership**:
+4. **Booking Ownership**:
    - The user who creates the booking is considered the owner of the booking. Only the booking owner can make modifications such as updating dates, cancellation, rebooking, etc.
 
-4. **Owner and Guest Distinction**:
+5. **Booking Owner and Guest Distinction**:
    - The booking owner is not necessarily one of the guests. For example, a user might make a reservation for someone else in their family.
 
-5. **Date Control Methodology**:
-   - The API's date control is day-based. For example, if a user checks in today and checks out tomorrow (a one-night stay), only today's date will be considered occupied in the backend.
+6. **Date Control Methodology**:
+   - The API's date control is day-based. For example, if a user checks in today in the property and checks out tomorrow (a one-night stay), only today's date will be considered occupied in the database.
 
-6. **Pre-existing User and Property Registration**:
-   - It is assumed that the User and Property registration system already exists (potentially in another service). Therefore, this part was not implemented in the current system. A class named `DBPopulator` populates some **Properties** with their **owners/managers** when the application starts, providing sufficient data to test the main functionalities of the API.
+7. **Pre-existing User and Property Registration**:
+   - It is assumed that the User and Property registration system already exists (potentially in another service). Therefore, this part of the system was not implemented. A class named `DBPopulator` populates some **Properties** with their **owners/managers** when the application starts, providing sufficient data to test the main functionalities of the API.
 
 ## Implementation
 
@@ -33,6 +36,21 @@ Below is the ER diagram:
 ## Running the application
 
 Ensure you have **Java 17** and **Apache Maven** installed on your system. Verify that port 8080 is available. From the project's root directory, run the application using the following Maven command:
+
+```
+mvn spring-boot:run
+```
+
+We may also compile the application to generate a jar file in the `target` folder by running:
+
+```
+mvn clean install
+```
+and then we can run the compiled jar file:
+
+```
+java -jar target/booknblock-0.0.1-SNAPSHOT.jar
+```
 
 ### Sending requests
 
@@ -53,7 +71,19 @@ The request body should contain the email and password of a user registered in t
 
 ```
 
-If the user exists and the password is correct, the response will contain the authentication token:
+If the email or password is invalid (the user doesn't exist in the database), an error of Unauthorized HTTP 401 is returned:
+
+```
+{
+    "httpStatus": 401,
+    "httpError": "Unauthorized",
+    "timestamp": "2024-01-28T11:22:32.806065",
+    "message": "Bad credentials"
+}
+```
+
+
+If the user exists with the provided credentials, the response will contain the authentication token (HTTP 200 - OK):
 
 ```
 {
@@ -68,6 +98,10 @@ Now we can use this token in the Authorization header of other endpoints, and th
 
 ```
 POST http://localhost:8080/api/v1/bookings
+```
+Headers: 
+```
+"Authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJtYXJjdXMud2VsbGZvcmRAZXhhbXBsZS5jb20iLCJpYXQiOjE3MDYyOTU2NzYsImV4cCI6MTcwNjI5OTI3Nn0.sk1l-zPGh3nOOA0oCY8BBN-0rMI0dVXMnBZmlwSIjkE"
 ```
 
 ```
@@ -89,7 +123,7 @@ POST http://localhost:8080/api/v1/bookings
 }
 ```
 
-If all input fields are valid and the Property exists in the database, the response should be something like:
+If all input fields are valid and the Property exists in the database, the response should be something like (HTTP 201 - Created):
 
 ```
 {
@@ -121,6 +155,19 @@ If all input fields are valid and the Property exists in the database, the respo
     ]
 }
 ```
+
+If an invalid or expired token is sent, an error response will be returned (HTTP 401 - Unauthorized):
+
+```
+{
+    "httpStatus": "401",
+    "httpError": "Unauthorized",
+    "timestamp": "2024-01-28T11:27:56.890381",
+    "message": "Not logged in: JWT expired at 2024-01-28T14:27:53Z. Current time: 2024-01-28T14:27:56Z, a difference of 3887 milliseconds.  Allowed clock skew: 0 milliseconds."
+}
+```
+
+
 ### Creating a block:
 
 To create a block, the authenticated user must be either the Owner or one of the Managers of the property. In the DBPopulator class, some properties along with their managers and owners are already created.
@@ -170,44 +217,48 @@ Same will happen if a Manager tries to create a block that conflicts with anothe
 
 ### Authorization control
 
-When a user tries to perform an action for which they don't have permission (for example, trying to create a Block for a property where they are neither the Manager nor the Owner), they will receive an HTTP 401 - Unauthorized as a response:
+When a user tries to perform an action for which they don't have permission (for example, trying to create a Block for a property where they are neither the Manager nor the Owner), they will receive an HTTP Forbidden 403 as a response:
 
 ```
 {
-    "httpStatus": 401,
-    "httpError": "Unauthorized",
-    "timestamp": "2024-01-26T18:08:02.429528",
+    "httpStatus": 403,
+    "httpError": "Forbidden",
+    "timestamp": "2024-01-28T11:31:36.242877",
+    "loggedUser": "alexa.richmond@example.com",
     "message": "You are not allowed to access this resource"
 }
 ```
 
 This also happens if a User tries to update, cancel, or delete a Booking that they didn't create.
 
-## Running automated tests
+## Atomated tests
 
-```bash
+Several unit and integration tests were implemented to ensure app runs smoothly. 
+- The integration tests focus on checking the JSON data input and output, as well as the HTTP response codes.
+- The unit tests concentrate on examining the internal behavior of each public method in the app, making sure everything works as it should internally.
+
+The following command should be used to run the automated tests:
+
+```
 mvn spring-boot:run
 ```
 
-To run the automated tests we can use a maven command:
-```bash
-mvn test
-```
 Expected result:
-```bash
 
+```
 ...
-[INFO] Results:
+INFO] Results:
 [INFO] 
-[INFO] Tests run: 70, Failures: 0, Errors: 0, Skipped: 0
+[INFO] Tests run: 73, Failures: 0, Errors: 0, Skipped: 0
 [INFO] 
 [INFO] ------------------------------------------------------------------------
 [INFO] BUILD SUCCESS
 [INFO] ------------------------------------------------------------------------
-[INFO] Total time:  6.987 s
-[INFO] Finished at: 2024-01-26T17:25:35-03:00
+[INFO] Total time:  7.307 s
+[INFO] Finished at: 2024-01-28T11:33:04-03:00
 [INFO] ------------------------------------------------------------------------
 ```
+
 ## BookNBlock API Documentation
 
 Below is the API documentation for all controllers of the application: **AuthenticationController**, **BookingController** and **BlockController**.
