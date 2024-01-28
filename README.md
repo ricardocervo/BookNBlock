@@ -332,6 +332,8 @@ This section details the Booking Reservation API, covering operations for creati
   - `201 Created`: Booking successfully created.
   - `400 Bad Request`: Input validation error.
   - `403 Forbidden`: User not authorized to create a booking.
+  - `409 Conflict`: StartDate / EndDate conflicts with another existing Block or Booking for the same property.
+
 
 ### `PATCH /api/v1/bookings/{bookingId}/cancel`
 - **Description**: Cancels an existing booking.
@@ -354,6 +356,7 @@ This section details the Booking Reservation API, covering operations for creati
   - `400 Bad Request`: Invalid date range.
   - `403 Forbidden`: User not authorized to update booking dates.
   - `404 Not Found`: Booking not found.
+  - `409 Conflict`: StartDate / EndDate conflicts with another existing Block or Booking for the same property.
 
 ### `PATCH /api/v1/bookings/{bookingId}/guests`
 - **Description**: Updates the guests of an existing booking.
@@ -397,61 +400,71 @@ This section details the Booking Reservation API, covering operations for creati
   - `404 Not Found`: Booking not found.
 
 
-# Block API Endpoints
+## Block Management API Documentation
 
-## Base URL
-`/api/v1/blocks`
+### Overview
+This document outlines the Block Management API, which handles operations related to creating, updating, and deleting blocks in a property.
 
-## Endpoints
+### Endpoints
 
-### 1. Create a Block
-Creates a new block.
+### `POST /api/v1/blocks`
+- **Description**: Creates a new block.
+- **Request Body**: `BlockRequestDto`
+  - `propertyId`: UUID
+  - `startDate`: LocalDate (NotNull)
+  - `endDate`: LocalDate (NotNull)
+  - `reason`: String
+- **Response**: `BlockResponseDto`
+  - `id`: UUID
+  - `propertyId`: UUID
+  - `startDate`: LocalDate
+  - `endDate`: LocalDate
+  - `reason`: String
+- **Status Codes**:
+  - `201 Created`: Block successfully created.
+  - `400 Bad Request`: Input validation error.
+  - `403 Forbidden`: User not authorized to create a block, i.e. user is not owner neither manager of the property.
+  - `409 Conflict`: StartDate / EndDate conflicts with another existing Block or Booking for the same property.
 
-- **URL**: `/api/v1/blocks`
-- **Method**: `POST`
-- **Request Body**: 
-  - `BlockRequestDto` object which includes:
-    - `propertyId`: UUID of the property.
-    - `startDate`: Start date of the block (format: `yyyy-mm-dd`).
-    - `endDate`: End date of the block (format: `yyyy-mm-dd`).
-    - `reason`: Reason for the block.
-- **Success Response**:
-  - **Code**: `201 CREATED`
-  - **Content**: `BlockResponseDto` object with block details.
-- **Error Response**:
-  - **Code**: `400 BAD REQUEST` if the request data is invalid.
-  - **Code**: `404 NOT FOUND` if the property is not found.
-  - **Code**: `409 CONFLICT` if the block dates overlap with existing blocks or bookings.
+### `PUT /api/v1/blocks/{blockId}`
+- **Description**: Updates an existing block.
+- **Path Variable**: `blockId` (UUID)
+- **Request Body**: `BlockUpdateDto`
+  - `startDate`: LocalDate
+  - `endDate`: LocalDate
+  - `reason`: String
+- **Response**: `BlockResponseDto` (Same as `POST /api/v1/blocks`)
+- **Status Codes**:
+  - `200 OK`: Block successfully updated.
+  - `400 Bad Request`: Input validation error.
+  - `403 Forbidden`: User not authorized to update the block.
+  - `404 Not Found`: Block not found.
+  - `409 Conflict`: StartDate / EndDate conflicts with another existing Block or Booking for the same property.
 
-### 2. Update a Block
-Updates an existing block.
+### `DELETE /api/v1/blocks/{blockId}`
+- **Description**: Deletes an existing block.
+- **Path Variable**: `blockId` (UUID)
+- **Status Codes**:
+  - `204 No Content`: Block successfully deleted.
+  - `403 Forbidden`: User not authorized to delete the block.
+  - `404 Not Found`: Block not found.
 
-- **URL**: `/api/v1/blocks/{blockId}`
-- **Method**: `PUT`
-- **URL Parameters**: 
-  - `blockId` [UUID] - The ID of the block to update.
-- **Request Body**: 
-  - `BlockUpdateDto` object which includes:
-    - `startDate`: New start date of the block (format: `yyyy-mm-dd`).
-    - `endDate`: New end date of the block (format: `yyyy-mm-dd`).
-    - `reason`: New reason for the block.
-- **Success Response**:
-  - **Code**: `200 OK`
-  - **Content**: `BlockResponseDto` object with updated block details.
-- **Error Response**:
-  - **Code**: `400 BAD REQUEST` if the request data is invalid.
-  - **Code**: `404 NOT FOUND` if the block is not found.
-  - **Code**: `409 CONFLICT` if the updated block dates overlap with existing blocks or bookings.
+## DTOs
 
-### 3. Delete a Block
-Deletes an existing block.
+### BlockRequestDto
+- `propertyId`: UUID
+- `startDate`: LocalDate (NotNull)
+- `endDate`: LocalDate (NotNull)
+- `reason`: String
 
-- **URL**: `/api/v1/blocks/{blockId}`
-- **Method**: `DELETE`
-- **URL Parameters**: 
-  - `blockId` [UUID] - The ID of the block to delete.
-- **Success Response**:
-  - **Code**: `204 NO CONTENT`
-- **Error Response**:
-  - **Code**: `404 NOT FOUND` if the block is not found.
+### BlockResponseDto
+- `id`: UUID
+- `propertyId`: UUID
+- `startDate`: LocalDate
+- `endDate`: LocalDate
+- `reason`: String
 
+### BlockUpdateDto
+- `startDate`: LocalDate
+- `endDate`: LocalDate
+- `reason`: String
