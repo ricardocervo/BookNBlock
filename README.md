@@ -268,7 +268,7 @@ Below is the API documentation for all controllers of the application: **Authent
 ## Authentication API Documentation
 
 ### Overview
-This document outlines the Authentication API in a Spring Boot application, focusing on user authentication, token management, and error handling.
+This section details the Authentication API which should be used for user authentication.
 
 ### Endpoints
 
@@ -292,90 +292,109 @@ Authenticates a user and generates a JWT token.
 - `400 Bad Request`: Input validation error
 - `401 Unauthorized`: Authentication failed
 
-## Booking API Endpoints 
+### Endpoints
 
-## Overview
-The Booking API provides a set of endpoints for managing bookings, including creating, updating, canceling, and retrieving booking information.
+## Booking Reservation API Documentation
 
-## Base URL
-`/api/v1/bookings`
+### Overview
+This section details the Booking Reservation API, covering operations for creating, updating, canceling, and retrieving bookings.
 
-## Endpoints
+### Endpoints
 
-### Create Booking
-- **Method:** POST
-- **Path:** /
-- **Request Body:** `BookingRequestDto` 
-  - Includes details such as property ID, start date, end date, and guest information.
-- **Response:** `BookingResponseDto`
-  - Includes booking details like booking ID, property ID, dates, status, and guest information.
-- **Status Codes:**
-  - `200 OK`: Booking successfully created.
-  - `400 Bad Request`: Invalid request data.
+### `POST /api/v1/bookings`
+- **Description**: Creates a new booking.
+- **Request Body**: `BookingRequestDto`
+  - `propertyId`: UUID
+  - `startDate`: LocalDate (NotNull)
+  - `endDate`: LocalDate (NotNull)
+  - `guests`: List of `GuestDto` (NotNull, Valid, Min Size: 1)
+    - `id`: UUID
+    - `name`: String (NotNull, Size: Min 3, Max 255)
+    - `email`: String (NotNull, Email format)
+- **Response**: `BookingResponseDto`
+  - `id`: UUID
+  - `startDate`: LocalDate
+  - `endDate`: LocalDate
+  - `status`: BookingStatus
+  - `owner`: `UserDto`
+    - `name`: String
+    - `email`: String
+  - `property`: `PropertyDto`
+    - `id`: UUID
+    - `name`: String
+    - `location`: String
+    - `description`: String
+  - `guests`: List of `GuestDto`
+    - `id`: UUID
+    - `name`: String (Min: 3, Max: 255)
+    - `email`: String (Email format)
+- **Status Codes**:
+  - `201 Created`: Booking successfully created.
+  - `400 Bad Request`: Input validation error.
+  - `403 Forbidden`: User not authorized to create a booking.
 
-### Cancel Booking
-- **Method:** PATCH
-- **Path:** `/{bookingId}/cancel`
-- **Path Variable:** `bookingId` (UUID of the booking to cancel)
-- **Response:** `BookingResponseDto`
-  - Updated booking details with status set to 'CANCELED'.
-- **Status Codes:**
+### `PATCH /api/v1/bookings/{bookingId}/cancel`
+- **Description**: Cancels an existing booking.
+- **Path Variable**: `bookingId` (UUID)
+- **Response**: Same as `POST /api/v1/bookings`
+- **Status Codes**:
   - `200 OK`: Booking successfully canceled.
-  - `404 Not Found`: Booking with the given ID not found.
+  - `403 Forbidden`: User not authorized to cancel the booking.
+  - `404 Not Found`: Booking not found.
 
-### Update Booking Dates
-- **Method:** PATCH
-- **Path:** `/{bookingId}/dates`
-- **Path Variable:** `bookingId` (UUID of the booking to update)
-- **Request Body:** `BookingDateUpdateDto`
-  - New start and end dates for the booking.
-- **Response:** `BookingResponseDto`
-  - Updated booking details with new dates.
-- **Status Codes:**
+### `PATCH /api/v1/bookings/{bookingId}/dates`
+- **Description**: Updates the dates of an existing booking.
+- **Path Variable**: `bookingId` (UUID)
+- **Request Body**: `BookingDateUpdateDto`
+  - `startDate`: LocalDate
+  - `endDate`: LocalDate
+- **Response**: Same as `POST /api/v1/bookings`
+- **Status Codes**:
   - `200 OK`: Booking dates successfully updated.
   - `400 Bad Request`: Invalid date range.
-  - `404 Not Found`: Booking with the given ID not found.
+  - `403 Forbidden`: User not authorized to update booking dates.
+  - `404 Not Found`: Booking not found.
 
-### Update Booking Guests
-- **Method:** PATCH
-- **Path:** `/{bookingId}/guests`
-- **Path Variable:** `bookingId` (UUID of the booking to update)
-- **Request Body:** `BookingGuestUpdateDto`
-  - New guest information for the booking.
-- **Response:** `BookingResponseDto`
-  - Updated booking details with new guest information.
-- **Status Codes:**
+### `PATCH /api/v1/bookings/{bookingId}/guests`
+- **Description**: Updates the guests of an existing booking.
+- **Path Variable**: `bookingId` (UUID)
+- **Request Body**: `BookingGuestUpdateDto`
+  - `guests`: List of `GuestDto` (NotNull, Valid)
+    - `id`: UUID
+    - `name`: String (NotNull, Size: Min 3, Max 255)
+    - `email`: String (NotNull, Email format)
+- **Response**: Same as `POST /api/v1/bookings`
+- **Status Codes**:
   - `200 OK`: Booking guests successfully updated.
-  - `404 Not Found`: Booking with the given ID not found.
+  - `403 Forbidden`: User not authorized to update booking guests.
+  - `404 Not Found`: Booking not found.
 
-### Rebook Cancelled Booking
-- **Method:** PATCH
-- **Path:** `/{bookingId}/rebook`
-- **Path Variable:** `bookingId` (UUID of the cancelled booking to rebook)
-- **Response:** `BookingResponseDto`
-  - Details of the rebooked booking.
-- **Status Codes:**
+### `PATCH /api/v1/bookings/{bookingId}/rebook`
+- **Description**: Rebooks a canceled booking.
+- **Path Variable**: `bookingId` (UUID)
+- **Response**: Same as `POST /api/v1/bookings`
+- **Status Codes**:
   - `200 OK`: Booking successfully rebooked.
-  - `400 Bad Request`: Booking is not in a cancellable state.
-  - `404 Not Found`: Booking with the given ID not found.
+  - `400 Bad Request`: Booking cannot be rebooked.
+  - `403 Forbidden`: User not authorized to rebook the booking.
+  - `404 Not Found`: Booking not found.
 
-### Delete Booking
-- **Method:** DELETE
-- **Path:** `/{bookingId}`
-- **Path Variable:** `bookingId` (UUID of the booking to delete)
-- **Status Codes:**
+### `DELETE /api/v1/bookings/{bookingId}`
+- **Description**: Deletes an existing booking.
+- **Path Variable**: `bookingId` (UUID)
+- **Status Codes**:
   - `204 No Content`: Booking successfully deleted.
-  - `404 Not Found`: Booking with the given ID not found.
+  - `403 Forbidden`: User not authorized to delete the booking.
+  - `404 Not Found`: Booking not found.
 
-### Get Booking
-- **Method:** GET
-- **Path:** `/{bookingId}`
-- **Path Variable:** `bookingId` (UUID of the booking to retrieve)
-- **Response:** `BookingResponseDto`
-  - Details of the requested booking.
-- **Status Codes:**
+### `GET /api/v1/bookings/{bookingId}`
+- **Description**: Retrieves a specific booking by ID.
+- **Path Variable**: `bookingId` (UUID)
+- **Response**: Same as `POST /api/v1/bookings`
+- **Status Codes**:
   - `200 OK`: Booking successfully retrieved.
-  - `404 Not Found`: Booking with the given ID not found.
+  - `403 Forbidden`: User not authorized to view the booking.
+  - `404 Not Found`: Booking not found.
 
 
 # Block API Endpoints
