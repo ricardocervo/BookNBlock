@@ -1,5 +1,6 @@
 package com.ricardocervo.booknblock.block;
 
+import jakarta.validation.constraints.NotNull;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -12,8 +13,14 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @Builder
 public class BlockUpdateDto {
+
+    @NotNull
     private LocalDate startDate;
+
+    @NotNull
     private LocalDate endDate;
+
+    @NotNull
     private String reason;
 }
 
