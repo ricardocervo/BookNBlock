@@ -111,7 +111,6 @@ Request body:
     "propertyId":"601e0800-a069-4672-a1e4-0f5eec0f9e9c",
     "startDate": "2024-02-10",
     "endDate": "2024-02-13",
-    "includeLoggedUserAsGuest": true,
     "guests": [
         {
             "name": "Guest1",
@@ -125,7 +124,7 @@ Request body:
 }
 ```
 
-If all input fields are valid and the Property exists in the database, the response should be something like (HTTP 201 - Created):
+If all input fields are valid and the Property exists in the database, the response should be (HTTP 201 - Created):
 
 ```
 {
@@ -169,6 +168,18 @@ If an invalid or expired token is sent, an error response will be returned (HTTP
 }
 ```
 
+If a user tries to create a booking that conflicts with another non-canceled booking or an existing block for the same property, they will receive an HTTP 409 - Conflict response:
+
+```
+{
+    "httpStatus": 409,
+    "httpError": "Conflict",
+    "timestamp": "2024-01-28T12:34:52.576029",
+    "loggedUser": "manager1@gmail.com",
+    "message": "Booking dates are overlapping with an existing booking."
+}
+```
+
 
 ### Creating a block:
 
@@ -191,7 +202,7 @@ Request Body:
 }
 ```
 
-Expected Response:
+Expected Response (HTTP 201 - Created):
 
 ```
 {
@@ -213,8 +224,6 @@ If a user tries to create a booking whose dates conflict with a block or another
     "message": "Booking dates are overlapping with an existing booking."
 }
 ``` 
-
-Same will happen if a Manager tries to create a block that conflicts with another block or another booking in the same dates.
 
 
 ### Authorization control
@@ -398,6 +407,54 @@ This section details the Booking Reservation API, covering operations for creati
   - `200 OK`: Booking successfully retrieved.
   - `403 Forbidden`: User not authorized to view the booking.
   - `404 Not Found`: Booking not found.
+
+# DTOs
+
+## BookingRequestDto
+This DTO is used for creating new bookings.
+- `propertyId`: UUID - Identifier of the property.
+- `startDate`: LocalDate (NotNull) - Start date of the booking.
+- `endDate`: LocalDate (NotNull) - End date of the booking.
+- `guests`: List of `GuestDto` - List of guests. Each `GuestDto` must be valid, not null, with a minimum size of 1.
+
+## BookingResponseDto
+This DTO is used as a response for booking-related operations.
+- `id`: UUID - Unique identifier of the booking.
+- `startDate`: LocalDate - Start date of the booking.
+- `endDate`: LocalDate - End date of the booking.
+- `status`: BookingStatus - Current status of the booking (e.g., CONFIRMED, CANCELED).
+- `owner`: `UserDto` - Information about the owner of the booking.
+- `property`: `PropertyDto` - Details of the property.
+- `guests`: List of `GuestDto` - List of guests included in the booking.
+
+## BookingGuestUpdateDto
+Used for updating guests in an existing booking.
+- `guests`: List of `GuestDto` - List of updated guest information. Each `GuestDto` must be valid and not null.
+
+## BookingDateUpdateDto
+Used for updating the dates of an existing booking.
+- `startDate`: LocalDate - Updated start date of the booking.
+- `endDate`: LocalDate - Updated end date of the booking.
+
+## GuestDto
+Included in several DTOs for guest details.
+- `id`: UUID - Unique identifier of the guest.
+- `name`: String - Name of the guest (Min: 3 characters, Max: 255 characters).
+- `email`: String - Email address of the guest (valid email format).
+
+## UserDto
+Part of `BookingResponseDto` to provide details about the booking owner.
+- `name`: String - Name of the user.
+- `email`: String - Email address of the user.
+
+## PropertyDto
+Included in `BookingResponseDto` for property details.
+- `id`: UUID - Unique identifier of the property.
+- `name`: String - Name of the property.
+- `location`: String - Location of the property.
+- `description`: String - Description of the property.
+
+
 
 
 ## Block Management API Documentation
