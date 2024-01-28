@@ -104,6 +104,8 @@ Headers:
 "Authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJtYXJjdXMud2VsbGZvcmRAZXhhbXBsZS5jb20iLCJpYXQiOjE3MDYyOTU2NzYsImV4cCI6MTcwNjI5OTI3Nn0.sk1l-zPGh3nOOA0oCY8BBN-0rMI0dVXMnBZmlwSIjkE"
 ```
 
+Request body:
+
 ```
 {
     "propertyId":"601e0800-a069-4672-a1e4-0f5eec0f9e9c",
@@ -263,38 +265,32 @@ INFO] Results:
 
 Below is the API documentation for all controllers of the application: **AuthenticationController**, **BookingController** and **BlockController**.
 
-## Authentication API Endpoints
+## Authentication API Documentation
 
-## Overview
-This endpoint is part of the authentication service, responsible for authenticating users. It uses JWT (JSON Web Token) for secure token generation after successful authentication.
+### Overview
+This document outlines the Authentication API in a Spring Boot application, focusing on user authentication, token management, and error handling.
 
-## Endpoint: Authenticate User
+### Endpoints
 
-### Method
-`POST`
+### `POST /api/v1/auth/authenticate`
 
-### Path
-`/authenticate`
+#### Description
+Authenticates a user and generates a JWT token.
 
-### Request Body: `AuthenticationRequest`
-- **email**: String (User's email)
-- **password**: String (User's password)
+#### Request Body
+- `AuthenticationRequest`
+  - `email`: User's email
+  - `password`: User's password
 
-### Response: `AuthenticationResponse`
-- **token**: String (JWT token for the authenticated user)
-- **user**: Object
-  - **name**: String (User's name)
-  - **email**: String (User's email)
+#### Response
+- `AuthenticationResponse`
+  - `token`: JWT token
+  - `user`: User details (name, email)
 
-### Functionality
-- Validates user credentials (email and password) through an `AuthenticationManager`.
-- Fetches the user details from the `UserRepository` using the email provided in the request.
-- Generates a JWT token using `JwtService` if authentication is successful.
-- Constructs and returns an `AuthenticationResponse` containing the JWT token and user details.
-
-### Error Handling
-- If authentication fails (due to invalid credentials), an exception is thrown.
-- If the user's email is not found in the repository, an exception is thrown.
+#### Status Codes
+- `200 OK`: Successfully authenticated
+- `400 Bad Request`: Input validation error
+- `401 Unauthorized`: Authentication failed
 
 ## Booking API Endpoints 
 
