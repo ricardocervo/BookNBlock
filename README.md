@@ -357,12 +357,12 @@ This section details the Booking Reservation API, covering operations for creati
 - **Description**: Updates the dates of an existing booking.
 - **Path Variable**: `bookingId` (UUID)
 - **Request Body**: `BookingDateUpdateDto`
-  - `startDate`: LocalDate
-  - `endDate`: LocalDate
+  - `startDate`: LocalDate (NotNull)
+  - `endDate`: LocalDate (NotNull)
 - **Response**: Same as `POST /api/v1/bookings`
 - **Status Codes**:
   - `200 OK`: Booking dates successfully updated.
-  - `400 Bad Request`: Invalid date range.
+  - `400 Bad Request`: Input validation error or Invalid date range.
   - `403 Forbidden`: User not authorized to update booking dates.
   - `404 Not Found`: Booking not found.
   - `409 Conflict`: StartDate / EndDate conflicts with another existing Block or Booking for the same property.
@@ -433,8 +433,8 @@ Used for updating guests in an existing booking.
 
 ## BookingDateUpdateDto
 Used for updating the dates of an existing booking.
-- `startDate`: LocalDate - Updated start date of the booking.
-- `endDate`: LocalDate - Updated end date of the booking.
+- `startDate`: LocalDate (NotNull) - Updated start date of the booking.
+- `endDate`: LocalDate - (NotNull) Updated end date of the booking.
 
 ## GuestDto
 Included in several DTOs for guest details.
@@ -487,9 +487,9 @@ This document outlines the Block Management API, which handles operations relate
 - **Description**: Updates an existing block.
 - **Path Variable**: `blockId` (UUID)
 - **Request Body**: `BlockUpdateDto`
-  - `startDate`: LocalDate
-  - `endDate`: LocalDate
-  - `reason`: String
+  - `startDate`: LocalDate (NotNull)
+  - `endDate`: LocalDate (NotNull)
+  - `reason`: String (NotNull)
 - **Response**: `BlockResponseDto` (Same as `POST /api/v1/blocks`)
 - **Status Codes**:
   - `200 OK`: Block successfully updated.
@@ -522,6 +522,6 @@ This document outlines the Block Management API, which handles operations relate
 - `reason`: String
 
 ### BlockUpdateDto
-- `startDate`: LocalDate
-- `endDate`: LocalDate
-- `reason`: String
+- `startDate`: LocalDate (NotNull)
+- `endDate`: LocalDate (NotNull)
+- `reason`: String (NotNull)
