@@ -64,6 +64,13 @@ Each service is responsible for executing specific business logic, ensuring sepa
 - **Unit Tests**: Key components are covered by unit tests, ensuring individual parts function as expected in isolation.
 - **Integration Tests**: These tests cover the interaction between different layers, particularly focusing on controllers, services, and the database.
 
+### ER Model:
+
+Below is the ER model of the database:
+
+![BookNBlock ER Diagram](https://github.com/ricardocervo/BookNBlock/blob/main/bnb-er.png)
+
+
 
 ## Running the application
 
