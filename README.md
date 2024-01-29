@@ -88,7 +88,12 @@ java -jar target/booknblock-0.0.1-SNAPSHOT.jar
 
 In this section, we will see some examples of how to interact with the API to create Bookings and Blocks. A complete documentation of the API can be found further ahead in this document.
 
-After starting the application, we can use tools like Postman to send requests and interact with the API. The first request to be sent is for authentication:
+After starting the application, we can use tools like Postman to send requests and interact with the API. 
+
+
+### Authentication Request
+
+To be able to interact with the regular endpoints, we first need to authenticate an user and get a Token:
 
 ```
 POST http://localhost:8080/api/v1/auth/authenticate
@@ -126,12 +131,17 @@ If the user exists with the provided credentials, the response will contain the 
     "token": "eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJtYXJjdXMud2VsbGZvcmRAZXhhbXBsZS5jb20iLCJpYXQiOjE3MDYyOTU2NzYsImV4cCI6MTcwNjI5OTI3Nn0.sk1l-zPGh3nOOA0oCY8BBN-0rMI0dVXMnBZmlwSIjkE"
 }
 ```
-Now we can use this token in the Authorization header of other endpoints, and thus call for example the endpoint to create a Booking:
+Now we can use this token in the Authorization header of other endpoints.
+
+### Request for creating a Booking
+
+To create a Bookin, we need to send the following request:
 
 ```
 POST http://localhost:8080/api/v1/bookings
 ```
-Headers: 
+Headers (the token we got from the authentication request with prefix "Bearer "): 
+
 ```
 "Authorization": "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJtYXJjdXMud2VsbGZvcmRAZXhhbXBsZS5jb20iLCJpYXQiOjE3MDYyOTU2NzYsImV4cCI6MTcwNjI5OTI3Nn0.sk1l-zPGh3nOOA0oCY8BBN-0rMI0dVXMnBZmlwSIjkE"
 ```
@@ -210,6 +220,105 @@ If a user tries to create a booking that conflicts with another non-canceled boo
     "loggedUser": "manager1@gmail.com",
     "message": "Booking dates are overlapping with an existing booking."
 }
+```
+
+### Request to cancel a booking
+
+From now on, we will omit the Authorization header in the request, but it must be sent to all endpoints. Otherwise, a HTTP 401 will be returned. We will also omit the possible error responses. More details about all error responses may be found in the API documentation section.
+The following request must be sent to cancel a booking:
+
+```
+PATCH http://localhost:8080/api/v1/bookings/4cb27f5a-f464-4845-b7f6-fd15404fabf4/cancel
+```
+
+If the booking exists and user us authorized to cancel it (i.e. user is the booking owner), that is the expected response:
+
+```
+Same structure as create booking request: a JSON representing the current Booking object with the latest updates.
+
+```
+
+### Request to update dates
+
+The following is an example of a request that can be sent to update the dates of an existing Booking:
+
+```
+
+PATCH http://localhost:8080/api/v1/bookings/4cb27f5a-f464-4845-b7f6-fd15404fabf4/dates
+
+```
+
+Expected Response (HTTP 200 - Ok):
+
+```
+Same structure as create booking request: a JSON representing the current Booking object with the latest updates.
+
+```
+
+### Request to update Guests of a Booking
+
+The following is an example of a request that can be sent to update the Guests of an existing Booking:
+
+```
+PATCH http://localhost:8080/api/v1/bookings/4cb27f5a-f464-4845-b7f6-fd15404fabf4/guests
+```
+
+Request body:
+
+```
+{
+    "guests": [
+        {
+            "name": "New Guest",
+            "email": "new-guest@example.com"
+           
+        },
+        {
+            "name": "Jane Smith",
+            "email": "janesmith@example.com"           
+        }
+    ]
+}
+
+```
+Expected response (HTTP 200 - Ok)
+
+```
+Same structure as create booking request: a JSON representing the current Booking object with the latest updates.
+```
+
+### Request to Rebook a canceled Booking
+
+The following is an example of a request that can be sent to update the Guests of an existing Booking:
+
+```
+PATCH http://localhost:8080/api/v1/bookings/5b1b9226-2237-42be-8453-697655f75afb/rebook
+```
+Expected response (HTTP 200 - Ok):
+
+```
+Same structure as create booking request: a JSON representing the current Booking object with the latest updates.
+
+```
+
+### Request to delete a Booking
+
+```
+DELETE http://localhost:8080/api/v1/bookings/5b1b9226-2237-42be-8453-697655f75afb
+```
+Expected response: HTTP 204 - No content
+
+### Request to get an existing booking
+
+```
+GET http://localhost:8080/api/v1/bookings/38d8e5db-91f1-41de-a59d-e49821ad3960
+```
+
+Expected response (HTTP 200 - Ok):
+
+```
+Same structure as create booking request: a JSON representing the current Booking object with the latest updates.
+
 ```
 
 
