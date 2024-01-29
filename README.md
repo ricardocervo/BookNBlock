@@ -454,7 +454,7 @@ Authenticates a user and generates a JWT token.
 ## Booking Reservation API Documentation
 
 ### Overview
-This section details the Booking Reservation API, covering operations for creating, updating, canceling, and retrieving bookings.
+This section details the Booking Reservation API, covering operations for creating, updating, canceling, rebooking, and retrieving bookings.
 
 ### Endpoints
 
