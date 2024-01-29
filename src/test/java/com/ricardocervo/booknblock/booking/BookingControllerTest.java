@@ -354,13 +354,27 @@ public class BookingControllerTest extends BaseTest {
     }
 
     @Test
-    void rebook_ShouldReturnConflict_OverlappedDates() throws Exception {
+    void rebook_ShouldReturnConflict_BookingIsNotCanceled() throws Exception {
         Booking booking1 = createTestBooking(LocalDate.now().plusDays(3), LocalDate.now().plusDays(5));
         bookingRepository.save(booking1);
 
         mockMvc.perform(patch("/api/v1/bookings/" + booking1.getId() + "/rebook")
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isBadRequest());
+                .andExpect(status().isConflict());
+    }
+
+    @Test
+    void rebook_ShouldReturnConflict_OverlappedDates() throws Exception {
+        Booking booking1 = createTestBooking(LocalDate.now().plusDays(3), LocalDate.now().plusDays(5));
+        booking1.setStatus(BookingStatus.CANCELED);
+        bookingRepository.save(booking1);
+
+        Booking booking2 = createTestBooking(LocalDate.now().plusDays(3), LocalDate.now().plusDays(5));
+        bookingRepository.save(booking1);
+
+        mockMvc.perform(patch("/api/v1/bookings/" + booking1.getId() + "/rebook")
+                        .contentType(MediaType.APPLICATION_JSON))
+                .andExpect(status().isConflict());
     }
 
     @Test

@@ -228,7 +228,7 @@ public class BookingServiceImpl implements BookingService {
         Booking booking = getBookingOrThrowException(bookingId);
 
         if (booking.getStatus() != BookingStatus.CANCELED) {
-            throw new BadRequestException("Only cancelled bookings can be rebooked.");
+            throw new ConflictException("Only cancelled bookings can be rebooked.");
         }
 
         if (isOverlappingWithExistingBooking(booking) || isOverlappingWithBlock(booking)) {
