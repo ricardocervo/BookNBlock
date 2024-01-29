@@ -25,13 +25,45 @@ Below is the documentation of my solution for the proposed test.
 7. **Pre-existing User and Property Registration**:
    - It is assumed that the User and Property registration system already exists (potentially in another service). Therefore, this part of the system was not implemented. A class named `DBPopulator` populates some **Properties** with their **owners/managers** when the application starts, providing sufficient data to test the main functionalities of the API.
 
-## Implementation
+## Application Architecture 
 
-I implemented the solution for this challenge using **Java (version 17)**, **Spring Framework (version 3.2)** and **in-memory database H2**.
+The BookNBlock application is built using Spring Framework version 3.2, Java 17, and Maven. It follows Spring Boot standards and adopts a layered architecture for clarity and separation of concerns. Below is an overview of the key components:
 
-Below is the ER diagram:
+### Controllers:
+- **AuthenticationController**: Manages user authentication processes.
+- **BookingController**: Handles operations related to bookings, including creation, updating, cancellation, rebooking, and retrieval.
+- **BlockController**: Manages operations associated with property blocks, such as creation, updating, and deletion.
 
-![BookNBlock ER Diagram](https://github.com/ricardocervo/BookNBlock/blob/main/bnb-er.png)
+These controllers serve as the primary points of communication between the backend and the frontend client. They do not contain business logic but delegate operations to the respective services.
+
+### Services:
+- **AuthenticationService**: Implements the business logic for user authentication, supporting the AuthenticationController.
+- **BookingService**: Contains the core logic for handling booking operations as defined in the BookingController.
+- **BlockService**: Manages the business rules and operations for blocks, working in tandem with the BlockController.
+
+Each service is responsible for executing specific business logic, ensuring separation from the API layer represented by the controllers.
+
+### Data Access Layer:
+- **Entities**: Each database table is represented by an entity class, reflecting the table's structure and relationships.
+- **Repositories**: For each entity, there is a corresponding repository interface that provides data access and manipulation capabilities.
+
+### Additional Components:
+- **ModelMapper**: Utilized for converting between DTOs (Data Transfer Objects) and entity objects, aiding in data encapsulation and API response formation.
+- **SecurityService**: Manages security aspects, such as authorization and access control, used across various parts of the application.
+- **GlobalExceptionHandler**: A global exception handling mechanism that manages application-wide error handling and responses.
+- **JWTService: Manages JSON Web Token operations for secure authentication and authorization.
+
+### Database:
+- **In-memory Database**: The application is configured to use the in-memory volatile database H2, facilitating rapid development and testing without the need for external database setup.
+
+### Validation and Error Handling:
+- **Field-Level Validation**: Input validation at the field level is performed using Hibernate Validator annotations such as `@NotNull`, `@Size`, `@Email`, etc. These annotations ensure that the data conforms to basic constraints directly in the DTOs and entity classes.
+- **Service Layer Validation**: Additional validation logic is implemented in the service layer. This includes more complex business rules like controlling date overlaps in bookings. This layer ensures that data not only adheres to basic constraints but also aligns with specific business logic and operational rules.
+
+### Testing:
+- **Unit Tests**: Key components are covered by unit tests, ensuring individual parts function as expected in isolation.
+- **Integration Tests**: These tests cover the interaction between different layers, particularly focusing on controllers, services, and the database.
+
 
 ## Running the application
 
@@ -41,12 +73,12 @@ Ensure you have **Java 17** and **Apache Maven** installed on your system. Verif
 mvn spring-boot:run
 ```
 
-We may also compile the application to generate a jar file in the `target` folder by running:
+We may also compile the application to generate a `jar` file in the `target` folder by running:
 
 ```
 mvn clean install
 ```
-and then we can run the compiled jar file:
+and then we can run the compiled `jar` file:
 
 ```
 java -jar target/booknblock-0.0.1-SNAPSHOT.jar
