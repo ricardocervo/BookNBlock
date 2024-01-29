@@ -185,6 +185,8 @@ public class BookingServiceImpl implements BookingService {
 
         Booking booking = getBookingOrThrowException(bookingId);
 
+        validateUpdateCanceledBooking(booking);
+
         validateBookingDates(dateUpdateDto.getStartDate(), dateUpdateDto.getEndDate());
 
         booking.setStartDate(dateUpdateDto.getStartDate());
@@ -193,6 +195,12 @@ public class BookingServiceImpl implements BookingService {
         validateAndSaveBooking(booking);
 
         return buildResponseDto(booking);
+    }
+
+    private void validateUpdateCanceledBooking(Booking booking) {
+        if (booking.getStatus().equals(BookingStatus.CANCELED)) {
+            throw new ConflictException("The booking is canceled and cannot be updated.");
+        }
     }
 
     private void validateBookingDates(LocalDate startDate, LocalDate endDate) {
@@ -207,6 +215,7 @@ public class BookingServiceImpl implements BookingService {
         securityService.authorizeBookingUpdate(bookingId);
 
         Booking booking = getBookingOrThrowException(bookingId);
+        validateUpdateCanceledBooking(booking);
 
         guestRepository.deleteAll(booking.getGuests());
         booking.getGuests().clear();

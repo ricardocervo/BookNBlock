@@ -201,6 +201,23 @@ public class BookingControllerTest extends BaseTest {
     }
 
     @Test
+    void updateBookingDates_ShouldReturnConflict_WhenBookingIsCanceled() throws Exception {
+        Booking booking = createTestBooking();
+        booking.setStatus(BookingStatus.CANCELED);
+        bookingRepository.save(booking);
+        LocalDate newStartDate = booking.getStartDate().plusDays(2);
+        LocalDate newEndDate = booking.getEndDate().plusDays(3);
+        BookingDateUpdateDto dateUpdateDto = new BookingDateUpdateDto(newStartDate, newEndDate);
+
+        mockMvc.perform(patch("/api/v1/bookings/" + booking.getId() + "/dates")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(asJsonString(dateUpdateDto)))
+                .andExpect(status().isConflict())
+                .andReturn();
+
+    }
+
+    @Test
     void updateBookingDates_ShouldReturnForbidden_WhenUserIsNotBookingOwner() throws Exception {
         Booking booking = createTestBooking();
         LocalDate newStartDate = booking.getStartDate().plusDays(2);
@@ -293,6 +310,24 @@ public class BookingControllerTest extends BaseTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(guestUpdateJson))
                 .andExpect(status().isBadRequest());
+    }
+
+    @Test
+    void updateBookingGuests_ShouldReturnConflict_WhenBookingIsCanceled() throws Exception {
+        Booking booking1 = createTestBooking(LocalDate.now().plusDays(3), LocalDate.now().plusDays(5));
+        booking1.setStatus(BookingStatus.CANCELED);
+        bookingRepository.save(booking1);
+
+        BookingGuestUpdateDto guestUpdateDto = BookingGuestUpdateDto.builder()
+                .guests(List.of(GuestDto.builder().email("email@email.com").name("name1").build()))
+                .build();
+
+        String guestUpdateJson = asJsonString(guestUpdateDto);
+
+        mockMvc.perform(patch("/api/v1/bookings/" + booking1.getId() + "/guests")
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(guestUpdateJson))
+                .andExpect(status().isConflict());
     }
 
     @Test
