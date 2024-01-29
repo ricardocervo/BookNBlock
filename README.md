@@ -392,7 +392,7 @@ Several unit and integration tests were implemented to ensure app runs smoothly.
 The following command should be used to run the automated tests:
 
 ```
-mvn spring-boot:run
+mvn test
 ```
 
 Expected result:
